@@ -63,14 +63,15 @@ const AppShell = () => {
   );
 };
 
+// App root with providers
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <AuthProvider>
-        <LocaleProvider>
+      <LocaleProvider>
+        <AuthProvider>
           <AppShell />
-        </LocaleProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </LocaleProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
