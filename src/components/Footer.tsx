@@ -105,13 +105,12 @@ const Footer = () => {
       <div className="border-t border-border">
         <div className="container mx-auto px-4 py-4 sm:py-5 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           <p className="text-[11px] sm:text-xs text-muted-foreground">{t("footer.rights")}</p>
-          <div className="flex items-center gap-3 sm:gap-4 text-[11px] sm:text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Shield className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
-              <span>Admin-Verified</span>
-            </div>
+          <div className="flex items-center gap-3 sm:gap-5 text-[11px] sm:text-xs text-muted-foreground">
+            <Link to="/" className="hover:text-foreground transition-colors">Privacy Policy</Link>
             <span className="w-px h-3 bg-border" />
-            <span>Bangladesh 🇧🇩 & Global 🌍</span>
+            <Link to="/" className="hover:text-foreground transition-colors">Terms of Service</Link>
+            <span className="w-px h-3 bg-border" />
+            <Link to="/" className="hover:text-foreground transition-colors">Licence</Link>
           </div>
         </div>
       </div>
