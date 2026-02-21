@@ -25,13 +25,13 @@ const StickyCard = ({ step, index, totalCards }: { step: typeof steps[0]; index:
       style={{ zIndex: index + 1 }}
     >
       <div
-        className="rounded-xl border border-border bg-card p-5 sm:p-6 transition-all duration-300"
+        className="rounded-xl border border-border bg-card p-6 sm:p-8 min-h-[220px] sm:min-h-[240px] flex items-start transition-all duration-300"
         style={{
           // Slight scale reduction for stacked cards to create depth
           transform: `scale(${1 - (totalCards - 1 - index) * 0.02})`,
         }}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8 w-full">
           {/* Left side */}
           <div>
             <div className="flex items-center justify-between mb-4">
