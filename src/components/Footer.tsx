@@ -10,8 +10,8 @@ const Footer = () => {
     <footer className="bg-card border-t border-border shadow-[0_-1px_30px_-15px_hsl(var(--foreground)/0.06)]">
       {/* CTA Banner */}
       <div className="container mx-auto px-4 pt-8 sm:pt-12">
-        <div className="relative mb-8 sm:mb-12 rounded-xl sm:rounded-2xl bg-primary/[0.08] border border-primary/20 p-6 sm:p-8 lg:p-12 text-center shadow-lg shadow-primary/5 overflow-hidden">
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--primary)/0.05),transparent_50%)]" />
+        <div className="relative mb-8 sm:mb-12 p-6 sm:p-8 lg:p-12 text-center">
+          <div className="absolute inset-0" />
           <div className="relative z-10">
             <h3 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-2 sm:mb-3">
               Ready to Start Investing?
