@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { 
   FileText, ShieldCheck, Search, 
   Eye, HandCoins, BarChart3,
@@ -14,6 +15,64 @@ const steps = [
   { icon: HandCoins, number: "05", titleKey: "hiwd.step5", color: "text-violet-500" },
   { icon: BarChart3, number: "06", titleKey: "hiwd.step6", color: "text-rose-500" },
 ];
+
+const StickyCard = ({ step, index, totalCards }: { step: typeof steps[0]; index: number; totalCards: number }) => {
+  const { t } = useLocale();
+  const Icon = step.icon;
+
+  return (
+    <div
+      className="sticky top-24 mb-8 last:mb-0"
+      style={{ zIndex: index + 1 }}
+    >
+      <div
+        className="rounded-xl border border-border bg-card p-5 sm:p-6 transition-all duration-300"
+        style={{
+          // Slight scale reduction for stacked cards to create depth
+          transform: `scale(${1 - (totalCards - 1 - index) * 0.02})`,
+        }}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          {/* Left side */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-3xl sm:text-4xl font-bold text-muted-foreground/20 font-display">
+                {step.number}
+              </span>
+              <div className={`w-10 h-10 rounded-lg bg-muted flex items-center justify-center ${step.color}`}>
+                <Icon className="w-5 h-5" />
+              </div>
+            </div>
+
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5 block">
+              {t(`${step.titleKey}.subtitle`)}
+            </span>
+
+            <h3 className="font-display text-lg sm:text-xl font-bold text-foreground mb-2">
+              {t(`${step.titleKey}.title`)}
+            </h3>
+          </div>
+
+          {/* Right side */}
+          <div>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+              {t(`${step.titleKey}.desc`)}
+            </p>
+
+            <ul className="space-y-1.5">
+              {["h1", "h2", "h3"].map((h) => (
+                <li key={h} className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span>{t(`${step.titleKey}.${h}`)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const HowItWorksDetailedSection = () => {
   const { t } = useLocale();
@@ -42,47 +101,14 @@ const HowItWorksDetailedSection = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-5xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           {steps.map((step, index) => (
-            <motion.div
+            <StickyCard
               key={step.number}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <div className="group h-full rounded-xl border border-border bg-card hover:border-primary/30 transition-all duration-300 p-5 sm:p-6 hover:shadow-lg hover:shadow-primary/5">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-3xl sm:text-4xl font-bold text-muted-foreground/20 font-display">
-                    {step.number}
-                  </span>
-                  <div className={`w-10 h-10 rounded-lg bg-muted flex items-center justify-center ${step.color} group-hover:bg-primary/10 transition-colors`}>
-                    <step.icon className="w-5 h-5" />
-                  </div>
-                </div>
-
-                <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5 block">
-                  {t(`${step.titleKey}.subtitle`)}
-                </span>
-
-                <h3 className="font-display text-lg sm:text-xl font-bold text-foreground mb-2">
-                  {t(`${step.titleKey}.title`)}
-                </h3>
-
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                  {t(`${step.titleKey}.desc`)}
-                </p>
-
-                <ul className="space-y-1.5">
-                  {["h1", "h2", "h3"].map((h) => (
-                    <li key={h} className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                      <span>{t(`${step.titleKey}.${h}`)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </motion.div>
+              step={step}
+              index={index}
+              totalCards={steps.length}
+            />
           ))}
         </div>
       </div>
