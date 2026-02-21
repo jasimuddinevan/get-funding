@@ -12,6 +12,7 @@ import BusinessDetail from "./pages/BusinessDetail";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
+import About from "./pages/About";
 import BusinessOnboarding from "./pages/BusinessOnboarding";
 import InvestorDashboard from "./pages/investor/InvestorDashboard";
 import PortfolioOverview from "./pages/investor/PortfolioOverview";
@@ -40,6 +41,7 @@ const AppShell = () => {
             <Route path="/business/:id" element={<BusinessDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/about" element={<About />} />
             <Route path="/onboarding/business" element={<BusinessOnboarding />} />
             <Route path="/investor" element={<InvestorDashboard />}>
               <Route index element={<PortfolioOverview />} />
