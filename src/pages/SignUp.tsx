@@ -31,7 +31,7 @@ const SignUp = () => {
       toast.error(error.message);
     } else {
       toast.success("Check your email to verify your account!");
-      navigate("/login");
+      navigate(role === "business_owner" ? "/onboarding/business" : "/login");
     }
   };
 
