@@ -12,6 +12,7 @@ import BusinessDetail from "./pages/BusinessDetail";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
+import BusinessOnboarding from "./pages/BusinessOnboarding";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const AppShell = () => {
             <Route path="/business/:id" element={<BusinessDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/onboarding/business" element={<BusinessOnboarding />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
