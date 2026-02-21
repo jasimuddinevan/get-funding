@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Star, Quote } from "lucide-react";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useState, useEffect, useCallback } from "react";
@@ -91,20 +91,22 @@ const TestimonialsSection = () => {
   ];
 
   const isBn = t("testimonials.label") !== "Testimonials";
-
   const [current, setCurrent] = useState(0);
-  const totalSlides = Math.ceil(testimonials.length / 3);
 
   const next = useCallback(() => {
-    setCurrent((prev) => (prev + 1) % totalSlides);
-  }, [totalSlides]);
+    setCurrent((prev) => (prev + 1) % testimonials.length);
+  }, [testimonials.length]);
 
   useEffect(() => {
     const timer = setInterval(next, 5000);
     return () => clearInterval(timer);
   }, [next]);
 
-  const visibleTestimonials = testimonials.slice(current * 3, current * 3 + 3);
+  // Show 3 cards: current, current+1, current+2 (wrapping)
+  const visible = [0, 1, 2].map((offset) => ({
+    ...testimonials[(current + offset) % testimonials.length],
+    idx: (current + offset) % testimonials.length,
+  }));
 
   return (
     <section className="py-16 sm:py-24">
@@ -125,40 +127,43 @@ const TestimonialsSection = () => {
         </motion.div>
 
         <div className="relative overflow-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 transition-opacity duration-500">
-            {visibleTestimonials.map((tm) => (
-              <motion.div
-                key={tm.nameEn + current}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-                className="relative rounded-xl sm:rounded-2xl p-5 sm:p-6 bg-card border border-border/60"
-              >
-                <Quote className="w-6 h-6 sm:w-8 sm:h-8 text-primary/15 absolute top-4 sm:top-5 right-4 sm:right-5" />
-                <div className="flex gap-1 mb-3 sm:mb-4">
-                  {Array.from({ length: tm.rating }).map((_, j) => (
-                    <Star key={j} className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-primary text-primary" />
-                  ))}
-                </div>
-                <p className="text-foreground/80 mb-5 sm:mb-6 leading-relaxed text-sm min-h-[120px]">
-                  "{isBn ? tm.quoteBn : tm.quote}"
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs sm:text-sm shrink-0">
-                    {(isBn ? tm.name : tm.nameEn).charAt(0)}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            <AnimatePresence mode="popLayout">
+              {visible.map((tm) => (
+                <motion.div
+                  key={tm.nameEn + "-" + tm.idx}
+                  initial={{ opacity: 0, x: 120 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -120 }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                  className="relative rounded-xl sm:rounded-2xl p-5 sm:p-6 bg-card border border-border/60"
+                >
+                  <Quote className="w-6 h-6 sm:w-8 sm:h-8 text-primary/15 absolute top-4 sm:top-5 right-4 sm:right-5" />
+                  <div className="flex gap-1 mb-3 sm:mb-4">
+                    {Array.from({ length: tm.rating }).map((_, j) => (
+                      <Star key={j} className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-primary text-primary" />
+                    ))}
                   </div>
-                  <div>
-                    <div className="font-semibold text-foreground text-sm">{isBn ? tm.name : tm.nameEn}</div>
-                    <div className="text-xs text-muted-foreground">{isBn ? tm.roleBn : tm.role}</div>
+                  <p className="text-foreground/80 mb-5 sm:mb-6 leading-relaxed text-sm min-h-[120px]">
+                    "{isBn ? tm.quoteBn : tm.quote}"
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs sm:text-sm shrink-0">
+                      {(isBn ? tm.name : tm.nameEn).charAt(0)}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-foreground text-sm">{isBn ? tm.name : tm.nameEn}</div>
+                      <div className="text-xs text-muted-foreground">{isBn ? tm.roleBn : tm.role}</div>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
 
           {/* Dots */}
           <div className="flex justify-center gap-2 mt-8">
-            {Array.from({ length: totalSlides }).map((_, i) => (
+            {testimonials.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrent(i)}
