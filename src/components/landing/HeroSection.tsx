@@ -24,7 +24,7 @@ const HeroSection = () => {
               <span className="text-[11px] sm:text-xs font-medium text-primary">{t("hero.badge")}</span>
             </div>
 
-            <h1 className="font-display font-bengali text-3xl sm:text-5xl lg:text-7xl font-bold leading-tight mb-4 sm:mb-6 px-2">
+            <h1 className="font-display text-3xl sm:text-5xl lg:text-7xl font-bold leading-tight mb-4 sm:mb-6 px-2">
               {t("hero.getInvestment1")}{" "}
               <span className="text-gradient-gold">{t("hero.getInvestment2")}</span>
             </h1>
