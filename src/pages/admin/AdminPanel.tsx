@@ -29,7 +29,7 @@ const AdminPanel = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-16">
+      <div>
         <SidebarProvider>
           <div className="min-h-[calc(100vh-4rem)] flex w-full">
             <AdminSidebar />

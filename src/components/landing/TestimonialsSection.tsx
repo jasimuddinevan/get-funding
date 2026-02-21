@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Star } from "lucide-react";
+import { Star, Quote } from "lucide-react";
 import { useLocale } from "@/contexts/LocaleContext";
 
 const TestimonialsSection = () => {
@@ -51,7 +51,7 @@ const TestimonialsSection = () => {
           <h2 className="font-display text-4xl sm:text-5xl font-bold text-foreground">{t("testimonials.title")}</h2>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-6">
           {testimonials.map((tm, i) => (
             <motion.div
               key={tm.nameEn}
@@ -59,19 +59,25 @@ const TestimonialsSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
               viewport={{ once: true }}
-              className="glass-card rounded-2xl p-6"
+              className="relative rounded-2xl p-6 bg-card border border-border/60 shadow-md shadow-foreground/[0.03] hover:shadow-lg transition-shadow"
             >
+              <Quote className="w-8 h-8 text-primary/15 absolute top-5 right-5" />
               <div className="flex gap-1 mb-4">
                 {Array.from({ length: tm.rating }).map((_, j) => (
                   <Star key={j} className="w-4 h-4 fill-primary text-primary" />
                 ))}
               </div>
-              <p className="text-foreground mb-6 leading-relaxed italic">
+              <p className="text-foreground mb-6 leading-relaxed text-sm">
                 "{isBn ? tm.quoteBn : tm.quote}"
               </p>
-              <div>
-                <div className="font-semibold text-foreground text-sm">{isBn ? tm.name : tm.nameEn}</div>
-                <div className="text-xs text-muted-foreground">{isBn ? tm.roleBn : tm.role}</div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shadow-inner">
+                  {(isBn ? tm.name : tm.nameEn).charAt(0)}
+                </div>
+                <div>
+                  <div className="font-semibold text-foreground text-sm">{isBn ? tm.name : tm.nameEn}</div>
+                  <div className="text-xs text-muted-foreground">{isBn ? tm.roleBn : tm.role}</div>
+                </div>
               </div>
             </motion.div>
           ))}

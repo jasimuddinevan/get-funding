@@ -81,7 +81,7 @@ const BusinessDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="pt-24 container mx-auto px-4 text-center py-20">
+        <div className="py-12 container mx-auto px-4 text-center">
           <h1 className="font-display text-3xl font-bold text-foreground mb-4">Business Not Found</h1>
           <p className="text-muted-foreground mb-6">The business you're looking for doesn't exist.</p>
           <Button asChild><Link to="/explore">Browse Businesses</Link></Button>
@@ -140,7 +140,7 @@ const BusinessDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pt-24 pb-16">
+      <main className="py-8">
         <div className="container mx-auto px-4">
           {/* Back */}
           <Link to="/explore" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
