@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, LayoutGrid, List, SlidersHorizontal, X } from "lucide-react";
+import { Search, LayoutGrid, List, SlidersHorizontal, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,8 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BusinessCard from "@/components/BusinessCard";
-import { MOCK_BUSINESSES, INDUSTRIES } from "@/data/businesses";
+import { INDUSTRIES } from "@/data/businesses";
 import { useLocale } from "@/contexts/LocaleContext";
+import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
+
+type Business = Tables<"businesses">;
 
 const LOCATIONS = ["All Locations", "Bangladesh", "Global"] as const;
 
@@ -22,17 +26,33 @@ const Explore = () => {
   const [location, setLocation] = useState("All Locations");
   const [revenueRange, setRevenueRange] = useState([0, 20]);
   const [showFilters, setShowFilters] = useState(false);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBusinesses = async () => {
+      const { data } = await supabase
+        .from("businesses")
+        .select("*")
+        .eq("status", "approved")
+        .order("created_at", { ascending: false });
+      setBusinesses(data ?? []);
+      setLoading(false);
+    };
+    fetchBusinesses();
+  }, []);
 
   const filtered = useMemo(() => {
-    return MOCK_BUSINESSES.filter((b) => {
-      if (search && !b.name.toLowerCase().includes(search.toLowerCase()) && !b.description.toLowerCase().includes(search.toLowerCase())) return false;
+    return businesses.filter((b) => {
+      if (search && !b.name.toLowerCase().includes(search.toLowerCase()) && !(b.description ?? "").toLowerCase().includes(search.toLowerCase())) return false;
       if (industry !== "All Industries" && b.industry !== industry) return false;
       if (location === "Bangladesh" && b.region !== "bd") return false;
       if (location === "Global" && b.region !== "global") return false;
-      if (b.revenueShare < revenueRange[0] || b.revenueShare > revenueRange[1]) return false;
+      const share = b.revenue_share_pct ?? 0;
+      if (share < revenueRange[0] || share > revenueRange[1]) return false;
       return true;
     });
-  }, [search, industry, location, revenueRange]);
+  }, [search, industry, location, revenueRange, businesses]);
 
   const activeFilterCount = [
     industry !== "All Industries",
@@ -124,7 +144,11 @@ const Explore = () => {
             {filtered.length} {filtered.length !== 1 ? t("explore.businesses") : t("explore.business")} {t("explore.found")}
           </div>
 
-          {filtered.length > 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : filtered.length > 0 ? (
             <div className={view === "grid" ? "grid sm:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-4"}>
               {filtered.map((biz, i) => (
                 <motion.div key={biz.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }}>
