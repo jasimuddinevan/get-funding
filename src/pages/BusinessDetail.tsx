@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, MapPin, TrendingUp, ShieldCheck, Calendar, Globe, Users,
   DollarSign, BarChart3, FileText, Building2, Target, Percent, Clock,
   ArrowRight, Heart, Share2, MessageSquare, Loader2, CheckCircle2,
+  Briefcase, Zap, Linkedin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,44 +18,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { MOCK_BUSINESSES } from "@/data/businesses";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Tables } from "@/integrations/supabase/types";
 
-const EXTENDED_DATA: Record<string, {
-  pitch: string;
-  problem: string;
-  market: string;
-  advantage: string;
-  team: { name: string; role: string; bio: string }[];
-  financials: { revenue: string; growth: string; margin: string; projection: string };
-  tiers: { name: string; min: number; share: number; payout: string }[];
-  qna: { q: string; a: string }[];
-}> = {
-  default: {
-    pitch: "We are building a scalable, high-impact business that leverages technology to disrupt traditional markets. Our revenue sharing model ensures investors benefit directly from our growth.",
-    problem: "Traditional investment channels are inaccessible for small investors while quality businesses struggle to find fair funding outside of bank loans.",
-    market: "The target market spans over 170 million consumers in Bangladesh and expanding into Southeast Asian markets worth $300B+.",
-    advantage: "First-mover advantage in revenue-sharing model, proprietary technology, strong local partnerships, and admin-verified trust layer through FundBridge.",
-    team: [
-      { name: "Arif Rahman", role: "CEO & Founder", bio: "10+ years in industry, former VP at leading conglomerate. MBA from IBA, University of Dhaka." },
-      { name: "Sarah Chen", role: "CTO", bio: "Ex-Google engineer, 8 years building scalable platforms. MS in CS from Stanford." },
-      { name: "Kamal Hossain", role: "CFO", bio: "Chartered Accountant with 15 years of financial management experience in South Asia." },
-    ],
-    financials: { revenue: "৳2.5 Cr/year", growth: "45% YoY", margin: "22%", projection: "৳8 Cr by 2028" },
-    tiers: [
-      { name: "Starter", min: 50000, share: 8, payout: "Quarterly" },
-      { name: "Growth", min: 200000, share: 12, payout: "Monthly" },
-      { name: "Premium", min: 1000000, share: 16, payout: "Monthly" },
-    ],
-    qna: [
-      { q: "How are revenue shares calculated?", a: "Revenue shares are calculated on gross revenue before expenses. Payouts are automated through FundBridge based on verified financial reports." },
-      { q: "What happens if the business underperforms?", a: "Revenue sharing is proportional — if revenue drops, payouts adjust accordingly. Your investment is tied to real performance, not fixed promises." },
-      { q: "Can I exit my investment early?", a: "After a 12-month lock-in period, you can list your share on FundBridge's secondary marketplace (coming soon)." },
-    ],
-  },
-};
+type Business = Tables<"businesses">;
+type TeamMember = Tables<"business_team_members">;
+type InvestmentTier = Tables<"investment_tiers">;
 
 const formatCurrency = (val: number) => {
   if (val >= 10000000) return `৳${(val / 10000000).toFixed(1)} Cr`;
@@ -68,14 +39,48 @@ const BusinessDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, userRole } = useAuth();
-  const business = MOCK_BUSINESSES.find((b) => b.id === id);
-  const ext = EXTENDED_DATA.default;
+
+  const [business, setBusiness] = useState<Business | null>(null);
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [tiers, setTiers] = useState<InvestmentTier[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [investorCount, setInvestorCount] = useState(0);
 
   const [investOpen, setInvestOpen] = useState(false);
   const [selectedTierIdx, setSelectedTierIdx] = useState<number | null>(null);
   const [amount, setAmount] = useState("");
   const [step, setStep] = useState<"select" | "confirm" | "success">("select");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    const fetchData = async () => {
+      setLoading(true);
+      const [bizRes, teamRes, tiersRes, investRes] = await Promise.all([
+        supabase.from("businesses").select("*").eq("id", id).maybeSingle(),
+        supabase.from("business_team_members").select("*").eq("business_id", id),
+        supabase.from("investment_tiers").select("*").eq("business_id", id).order("min_amount", { ascending: true }),
+        supabase.from("investments").select("id", { count: "exact" }).eq("business_id", id),
+      ]);
+      setBusiness(bizRes.data);
+      setTeam(teamRes.data ?? []);
+      setTiers(tiersRes.data ?? []);
+      setInvestorCount(investRes.count ?? 0);
+      setLoading(false);
+    };
+    fetchData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="py-20 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
 
   if (!business) {
     return (
@@ -91,7 +96,9 @@ const BusinessDetail = () => {
     );
   }
 
-  const fundedPct = Math.round((business.funded / business.fundingGoal) * 100);
+  const fundedPct = business.funding_goal
+    ? Math.round(((business.funded_amount ?? 0) / business.funding_goal) * 100)
+    : 0;
 
   const openInvestDialog = (tierIdx?: number) => {
     if (!user) {
@@ -104,79 +111,100 @@ const BusinessDetail = () => {
       return;
     }
     setSelectedTierIdx(tierIdx ?? null);
-    setAmount(tierIdx != null ? ext.tiers[tierIdx].min.toString() : "");
+    setAmount(tierIdx != null && tiers[tierIdx] ? tiers[tierIdx].min_amount.toString() : (business.min_investment?.toString() ?? "50000"));
     setStep("select");
     setInvestOpen(true);
   };
 
-  const selectedTier = selectedTierIdx != null ? ext.tiers[selectedTierIdx] : null;
+  const selectedTier = selectedTierIdx != null ? tiers[selectedTierIdx] : null;
   const parsedAmount = parseInt(amount.replace(/,/g, ""), 10) || 0;
-  const revenueShareForAmount = selectedTier?.share ?? business.revenueShare;
-
-  const canConfirm = parsedAmount >= (selectedTier?.min ?? 50000) && parsedAmount <= 100000000;
+  const revenueShareForAmount = selectedTier?.revenue_share_pct ?? business.revenue_share_pct ?? 0;
+  const minInvest = selectedTier?.min_amount ?? business.min_investment ?? 1000;
+  const canConfirm = parsedAmount >= minInvest && parsedAmount <= (business.max_investment ?? 100000000);
 
   const handleConfirmInvest = async () => {
     if (!user || !canConfirm) return;
     setSubmitting(true);
-
     const { error } = await supabase.from("investments").insert({
       investor_id: user.id,
       business_id: business.id,
       amount: parsedAmount,
       revenue_share_pct: revenueShareForAmount,
+      tier_id: selectedTier?.id ?? null,
       status: "active",
     });
-
     if (error) {
       toast.error(error.message);
       setSubmitting(false);
       return;
     }
-
     setStep("success");
     setSubmitting(false);
   };
+
+  const currentRevenue = business.current_revenue ?? 0;
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="py-8">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 max-w-6xl">
           {/* Back */}
           <Link to="/explore" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to Explore
           </Link>
 
-          {/* Header */}
+          {/* Hero Header */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col lg:flex-row gap-8 mb-10">
-            <div className="flex-1">
-              <div className="flex items-start gap-4 mb-4">
-                <div className="w-16 h-16 rounded-xl bg-primary/15 flex items-center justify-center text-primary font-bold text-2xl shrink-0">
-                  {business.name.charAt(0)}
+            {/* Left: Business Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start gap-4 mb-5">
+                <div className="w-16 h-16 rounded-2xl bg-primary/15 flex items-center justify-center text-primary font-bold text-2xl shrink-0 shadow-md">
+                  {business.logo_url ? (
+                    <img src={business.logo_url} alt={business.name} className="w-full h-full rounded-2xl object-cover" />
+                  ) : (
+                    business.name.charAt(0)
+                  )}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground">{business.name}</h1>
-                    {business.verified && (
+                    {business.status === "approved" && (
                       <Badge className="gap-1 bg-primary/15 text-primary border-primary/30">
                         <ShieldCheck className="w-3.5 h-3.5" /> Verified
                       </Badge>
                     )}
                   </div>
-                  <div className="flex items-center gap-4 mt-2 flex-wrap">
-                    <Badge variant="secondary">{business.industry}</Badge>
-                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="w-3.5 h-3.5" />{business.location}
-                    </span>
-                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Calendar className="w-3.5 h-3.5" />Founded {business.foundedYear}
-                    </span>
+                  <div className="flex items-center gap-3 mt-2 flex-wrap">
+                    {business.industry && <Badge variant="secondary">{business.industry}</Badge>}
+                    {business.location && (
+                      <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <MapPin className="w-3.5 h-3.5" />{business.location}
+                      </span>
+                    )}
+                    {business.founded_year && (
+                      <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Calendar className="w-3.5 h-3.5" />Founded {business.founded_year}
+                      </span>
+                    )}
+                    {business.website && (
+                      <a href={business.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-primary hover:underline">
+                        <Globe className="w-3.5 h-3.5" />Website
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
-              <p className="text-muted-foreground leading-relaxed">{business.description}</p>
 
-              <div className="flex gap-2 mt-4">
+              <p className="text-muted-foreground leading-relaxed mb-4">{business.description}</p>
+
+              {business.pitch && (
+                <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 mb-4">
+                  <p className="text-sm font-medium text-foreground italic">"{business.pitch}"</p>
+                </div>
+              )}
+
+              <div className="flex gap-2">
                 <Button variant="outline" size="sm" className="gap-1.5">
                   <Heart className="w-4 h-4" /> Watchlist
                 </Button>
@@ -186,13 +214,13 @@ const BusinessDetail = () => {
               </div>
             </div>
 
-            {/* Funding Card */}
-            <Card className="glass-card border-border/40 w-full lg:w-96 shrink-0">
+            {/* Right: Funding Card */}
+            <Card className="glass-card border-border/40 w-full lg:w-[380px] shrink-0 self-start">
               <CardContent className="p-6">
                 <div className="text-center mb-5">
-                  <div className="text-sm text-muted-foreground mb-1">Total Funded</div>
-                  <div className="font-display text-3xl font-bold text-foreground">{formatCurrency(business.funded)}</div>
-                  <div className="text-sm text-muted-foreground">of {formatCurrency(business.fundingGoal)} goal</div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Total Funded</div>
+                  <div className="font-display text-3xl font-bold text-foreground">{formatCurrency(business.funded_amount ?? 0)}</div>
+                  <div className="text-sm text-muted-foreground">of {formatCurrency(business.funding_goal ?? 0)} goal</div>
                 </div>
 
                 <div className="space-y-2 mb-5">
@@ -200,19 +228,24 @@ const BusinessDetail = () => {
                     <span className="text-muted-foreground">Progress</span>
                     <span className="font-semibold text-foreground">{fundedPct}%</span>
                   </div>
-                  <Progress value={fundedPct} className="h-2.5" />
+                  <Progress value={Math.min(fundedPct, 100)} className="h-2.5" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="text-center p-3 rounded-lg bg-secondary/50">
-                    <TrendingUp className="w-5 h-5 text-primary mx-auto mb-1" />
-                    <div className="text-lg font-bold text-foreground">{business.revenueShare}%</div>
-                    <div className="text-xs text-muted-foreground">Revenue Share</div>
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                  <div className="text-center p-3 rounded-xl bg-secondary/50">
+                    <TrendingUp className="w-4 h-4 text-primary mx-auto mb-1" />
+                    <div className="text-lg font-bold text-foreground">{business.revenue_share_pct ?? 0}%</div>
+                    <div className="text-[10px] text-muted-foreground">Rev. Share</div>
                   </div>
-                  <div className="text-center p-3 rounded-lg bg-secondary/50">
-                    <Users className="w-5 h-5 text-primary mx-auto mb-1" />
-                    <div className="text-lg font-bold text-foreground">47</div>
-                    <div className="text-xs text-muted-foreground">Investors</div>
+                  <div className="text-center p-3 rounded-xl bg-secondary/50">
+                    <Users className="w-4 h-4 text-primary mx-auto mb-1" />
+                    <div className="text-lg font-bold text-foreground">{investorCount}</div>
+                    <div className="text-[10px] text-muted-foreground">Investors</div>
+                  </div>
+                  <div className="text-center p-3 rounded-xl bg-secondary/50">
+                    <BarChart3 className="w-4 h-4 text-primary mx-auto mb-1" />
+                    <div className="text-lg font-bold text-foreground">{business.growth_rate ?? 0}%</div>
+                    <div className="text-[10px] text-muted-foreground">Growth</div>
                   </div>
                 </div>
 
@@ -220,128 +253,194 @@ const BusinessDetail = () => {
                   Invest Now <ArrowRight className="w-5 h-5" />
                 </Button>
                 <p className="text-[11px] text-muted-foreground text-center mt-2">
-                  Min. investment starts at ৳50,000
+                  Min. investment starts at {formatCurrency(business.min_investment ?? 1000)}
                 </p>
               </CardContent>
             </Card>
           </motion.div>
 
+          {/* Key Metrics Strip */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+            {[
+              { icon: DollarSign, label: "Annual Revenue", value: formatCurrency(currentRevenue), color: "text-primary" },
+              { icon: TrendingUp, label: "Growth Rate", value: `${business.growth_rate ?? 0}% YoY`, color: "text-green-500" },
+              { icon: Percent, label: "Profit Margin", value: `${business.profit_margin ?? 0}%`, color: "text-blue-500" },
+              { icon: Clock, label: "Payout Frequency", value: business.payout_frequency ? business.payout_frequency.charAt(0).toUpperCase() + business.payout_frequency.slice(1) : "N/A", color: "text-amber-500" },
+            ].map((item) => (
+              <Card key={item.label} className="glass-card border-border/40">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl bg-secondary/70 flex items-center justify-center ${item.color}`}>
+                    <item.icon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="font-display text-lg font-bold text-foreground">{item.value}</div>
+                    <div className="text-xs text-muted-foreground">{item.label}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </motion.div>
+
           {/* Tabs */}
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="bg-secondary/50 border border-border">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="financials">Financials</TabsTrigger>
-              <TabsTrigger value="terms">Revenue Terms</TabsTrigger>
-              <TabsTrigger value="team">Team</TabsTrigger>
-              <TabsTrigger value="qna">Q&A</TabsTrigger>
+            <TabsList className="bg-secondary/50 border border-border h-11">
+              <TabsTrigger value="overview" className="gap-1.5"><Target className="w-3.5 h-3.5" /> Overview</TabsTrigger>
+              <TabsTrigger value="tiers" className="gap-1.5"><Zap className="w-3.5 h-3.5" /> Investment Tiers</TabsTrigger>
+              <TabsTrigger value="team" className="gap-1.5"><Users className="w-3.5 h-3.5" /> Team</TabsTrigger>
+              <TabsTrigger value="qna" className="gap-1.5"><MessageSquare className="w-3.5 h-3.5" /> Q&A</TabsTrigger>
             </TabsList>
 
+            {/* Overview */}
             <TabsContent value="overview">
               <div className="grid md:grid-cols-2 gap-6">
-                <Card className="glass-card border-border/40">
-                  <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Target className="w-5 h-5 text-primary" /> The Pitch</CardTitle></CardHeader>
-                  <CardContent><p className="text-sm text-muted-foreground leading-relaxed">{ext.pitch}</p></CardContent>
-                </Card>
-                <Card className="glass-card border-border/40">
-                  <CardHeader><CardTitle className="text-lg flex items-center gap-2"><FileText className="w-5 h-5 text-primary" /> Problem Solved</CardTitle></CardHeader>
-                  <CardContent><p className="text-sm text-muted-foreground leading-relaxed">{ext.problem}</p></CardContent>
-                </Card>
-                <Card className="glass-card border-border/40">
-                  <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Globe className="w-5 h-5 text-primary" /> Target Market</CardTitle></CardHeader>
-                  <CardContent><p className="text-sm text-muted-foreground leading-relaxed">{ext.market}</p></CardContent>
-                </Card>
-                <Card className="glass-card border-border/40">
-                  <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-primary" /> Competitive Advantage</CardTitle></CardHeader>
-                  <CardContent><p className="text-sm text-muted-foreground leading-relaxed">{ext.advantage}</p></CardContent>
-                </Card>
+                {business.problem_solved && (
+                  <Card className="glass-card border-border/40">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2"><FileText className="w-4 h-4 text-primary" /> Problem Solved</CardTitle>
+                    </CardHeader>
+                    <CardContent><p className="text-sm text-muted-foreground leading-relaxed">{business.problem_solved}</p></CardContent>
+                  </Card>
+                )}
+                {business.target_market && (
+                  <Card className="glass-card border-border/40">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2"><Globe className="w-4 h-4 text-primary" /> Target Market</CardTitle>
+                    </CardHeader>
+                    <CardContent><p className="text-sm text-muted-foreground leading-relaxed">{business.target_market}</p></CardContent>
+                  </Card>
+                )}
+                {business.competitive_advantage && (
+                  <Card className="glass-card border-border/40">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-primary" /> Competitive Advantage</CardTitle>
+                    </CardHeader>
+                    <CardContent><p className="text-sm text-muted-foreground leading-relaxed">{business.competitive_advantage}</p></CardContent>
+                  </Card>
+                )}
+                {business.financial_projection && (
+                  <Card className="glass-card border-border/40">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2"><BarChart3 className="w-4 h-4 text-primary" /> Financial Projection</CardTitle>
+                    </CardHeader>
+                    <CardContent><p className="text-sm text-muted-foreground leading-relaxed">{business.financial_projection}</p></CardContent>
+                  </Card>
+                )}
               </div>
             </TabsContent>
 
-            <TabsContent value="financials">
-              <Card className="glass-card border-border/40">
-                <CardHeader><CardTitle className="text-lg flex items-center gap-2"><BarChart3 className="w-5 h-5 text-primary" /> Financial Highlights</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[
-                      { icon: DollarSign, label: "Annual Revenue", value: ext.financials.revenue },
-                      { icon: TrendingUp, label: "Growth Rate", value: ext.financials.growth },
-                      { icon: Percent, label: "Profit Margin", value: ext.financials.margin },
-                      { icon: Target, label: "Projected (3yr)", value: ext.financials.projection },
-                    ].map((item) => (
-                      <div key={item.label} className="p-4 rounded-xl bg-secondary/50 text-center">
-                        <item.icon className="w-6 h-6 text-primary mx-auto mb-2" />
-                        <div className="font-display text-xl font-bold text-foreground">{item.value}</div>
-                        <div className="text-xs text-muted-foreground mt-1">{item.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Investment Tiers */}
+            <TabsContent value="tiers">
+              {tiers.length > 0 ? (
+                <div className="grid sm:grid-cols-3 gap-5">
+                  {tiers.map((tier, i) => {
+                    const isPopular = i === Math.floor(tiers.length / 2);
+                    return (
+                      <Card key={tier.id} className={`relative overflow-hidden transition-all hover:shadow-lg ${isPopular ? "border-primary/50 ring-1 ring-primary/20" : "glass-card border-border/40"}`}>
+                        {isPopular && (
+                          <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-xl">
+                            POPULAR
+                          </div>
+                        )}
+                        <CardContent className="p-6">
+                          <h4 className="font-display text-xl font-bold text-foreground mb-1">{tier.name}</h4>
+                          <div className="text-3xl font-bold text-primary mb-4">{tier.revenue_share_pct}%</div>
+                          <Separator className="mb-4" />
+                          <div className="space-y-3 text-sm mb-6">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Min. Investment</span>
+                              <span className="font-semibold text-foreground">{formatCurrencyFull(tier.min_amount)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Revenue Share</span>
+                              <span className="font-bold text-primary">{tier.revenue_share_pct}%</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Payout</span>
+                              <span className="font-medium text-foreground flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {tier.payout_frequency ? tier.payout_frequency.charAt(0).toUpperCase() + tier.payout_frequency.slice(1) : "N/A"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Est. Monthly</span>
+                              <span className="font-medium text-foreground">
+                                ~{formatCurrency(Math.round((tier.min_amount * tier.revenue_share_pct) / 100 / 12))}
+                              </span>
+                            </div>
+                          </div>
+                          <Button
+                            className={`w-full ${isPopular ? "glow-gold" : ""}`}
+                            variant={isPopular ? "default" : "outline"}
+                            onClick={() => openInvestDialog(i)}
+                          >
+                            Select {tier.name}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Card className="glass-card border-border/40">
+                  <CardContent className="p-8 text-center">
+                    <p className="text-muted-foreground">No investment tiers available yet. You can still invest directly.</p>
+                    <Button className="mt-4 glow-gold" onClick={() => openInvestDialog()}>Invest Now</Button>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
-            <TabsContent value="terms">
-              <Card className="glass-card border-border/40">
-                <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Percent className="w-5 h-5 text-primary" /> Investment Tiers & Revenue Sharing</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="grid sm:grid-cols-3 gap-4">
-                    {ext.tiers.map((tier, i) => (
-                      <div key={tier.name} className={`rounded-xl p-5 border ${i === 1 ? "border-primary/50 bg-primary/5" : "border-border bg-secondary/30"}`}>
-                        {i === 1 && <Badge className="mb-2 text-[10px]">Popular</Badge>}
-                        <h4 className="font-display text-lg font-semibold text-foreground mb-3">{tier.name}</h4>
-                        <Separator className="mb-3" />
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Min. Investment</span>
-                            <span className="font-medium text-foreground">{formatCurrencyFull(tier.min)}</span>
+            {/* Team */}
+            <TabsContent value="team">
+              {team.length > 0 ? (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {team.map((member) => (
+                    <Card key={member.id} className="glass-card border-border/40 hover:border-primary/30 transition-all group">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-xl shrink-0 group-hover:bg-primary/25 transition-colors">
+                            {member.name.charAt(0)}
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Revenue Share</span>
-                            <span className="font-semibold text-primary">{tier.share}%</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Payout</span>
-                            <span className="font-medium text-foreground flex items-center gap-1"><Clock className="w-3 h-3" />{tier.payout}</span>
+                          <div>
+                            <h4 className="font-display text-lg font-semibold text-foreground">{member.name}</h4>
+                            <div className="text-sm text-primary font-medium">{member.role}</div>
                           </div>
                         </div>
-                        <Button
-                          className={`w-full mt-4 ${i === 1 ? "glow-gold" : ""}`}
-                          variant={i === 1 ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => openInvestDialog(i)}
-                        >
-                          Select Tier
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                        {member.bio && (
+                          <p className="text-sm text-muted-foreground leading-relaxed">{member.bio}</p>
+                        )}
+                        {member.linkedin_url && (
+                          <a href={member.linkedin_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-3">
+                            <Linkedin className="w-3.5 h-3.5" /> LinkedIn
+                          </a>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <Card className="glass-card border-border/40">
+                  <CardContent className="p-8 text-center">
+                    <p className="text-muted-foreground">Team information will be available soon.</p>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
-            <TabsContent value="team">
-              <div className="grid sm:grid-cols-3 gap-6">
-                {ext.team.map((member) => (
-                  <Card key={member.name} className="glass-card border-border/40">
-                    <CardContent className="p-5 text-center">
-                      <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-xl mx-auto mb-3">
-                        {member.name.charAt(0)}
-                      </div>
-                      <h4 className="font-display text-lg font-semibold text-foreground">{member.name}</h4>
-                      <div className="text-sm text-primary mb-2">{member.role}</div>
-                      <p className="text-xs text-muted-foreground leading-relaxed">{member.bio}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-
+            {/* Q&A */}
             <TabsContent value="qna">
               <Card className="glass-card border-border/40">
-                <CardHeader><CardTitle className="text-lg flex items-center gap-2"><MessageSquare className="w-5 h-5 text-primary" /> Common Questions</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2"><MessageSquare className="w-5 h-5 text-primary" /> Common Questions</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-5">
-                  {ext.qna.map((item) => (
-                    <div key={item.q}>
-                      <h4 className="font-semibold text-foreground text-sm mb-1">{item.q}</h4>
+                  {[
+                    { q: "How are revenue shares calculated?", a: "Revenue shares are calculated on gross revenue before expenses. Payouts are automated through FundBridge based on verified financial reports." },
+                    { q: "What happens if the business underperforms?", a: "Revenue sharing is proportional — if revenue drops, payouts adjust accordingly. Your investment is tied to real performance, not fixed promises." },
+                    { q: "Can I exit my investment early?", a: "After a 12-month lock-in period, you can list your share on FundBridge's secondary marketplace (coming soon)." },
+                  ].map((item) => (
+                    <div key={item.q} className="border-b border-border/40 pb-4 last:border-0 last:pb-0">
+                      <h4 className="font-semibold text-foreground text-sm mb-1.5">{item.q}</h4>
                       <p className="text-sm text-muted-foreground leading-relaxed">{item.a}</p>
                     </div>
                   ))}
@@ -366,33 +465,33 @@ const BusinessDetail = () => {
               </DialogHeader>
 
               <div className="space-y-5 py-4">
-                {/* Tier Selection */}
-                <div>
-                  <Label className="mb-2 block text-sm">Select a Tier</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {ext.tiers.map((tier, i) => (
-                      <button
-                        key={tier.name}
-                        type="button"
-                        onClick={() => {
-                          setSelectedTierIdx(i);
-                          if (parsedAmount < tier.min) setAmount(tier.min.toString());
-                        }}
-                        className={`p-3 rounded-xl border text-center transition-all ${
-                          selectedTierIdx === i
-                            ? "border-primary bg-primary/10"
-                            : "border-border bg-secondary/30 hover:border-primary/40"
-                        }`}
-                      >
-                        <div className="text-xs font-semibold text-foreground">{tier.name}</div>
-                        <div className="text-primary font-bold text-sm mt-1">{tier.share}%</div>
-                        <div className="text-[10px] text-muted-foreground">≥ {formatCurrencyFull(tier.min)}</div>
-                      </button>
-                    ))}
+                {tiers.length > 0 && (
+                  <div>
+                    <Label className="mb-2 block text-sm">Select a Tier</Label>
+                    <div className={`grid gap-2 ${tiers.length <= 3 ? `grid-cols-${tiers.length}` : "grid-cols-3"}`}>
+                      {tiers.map((tier, i) => (
+                        <button
+                          key={tier.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedTierIdx(i);
+                            if (parsedAmount < tier.min_amount) setAmount(tier.min_amount.toString());
+                          }}
+                          className={`p-3 rounded-xl border text-center transition-all ${
+                            selectedTierIdx === i
+                              ? "border-primary bg-primary/10"
+                              : "border-border bg-secondary/30 hover:border-primary/40"
+                          }`}
+                        >
+                          <div className="text-xs font-semibold text-foreground">{tier.name}</div>
+                          <div className="text-primary font-bold text-sm mt-1">{tier.revenue_share_pct}%</div>
+                          <div className="text-[10px] text-muted-foreground">≥ {formatCurrencyFull(tier.min_amount)}</div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Amount Input */}
                 <div>
                   <Label htmlFor="investAmount" className="mb-1.5 block text-sm">Investment Amount (৳)</Label>
                   <Input
@@ -401,31 +500,32 @@ const BusinessDetail = () => {
                     value={amount}
                     onChange={(e) => {
                       setAmount(e.target.value);
-                      // Auto-select tier based on amount
                       const val = parseInt(e.target.value, 10) || 0;
-                      const matchedIdx = [...ext.tiers].reverse().findIndex((t) => val >= t.min);
-                      setSelectedTierIdx(matchedIdx >= 0 ? ext.tiers.length - 1 - matchedIdx : null);
+                      if (tiers.length > 0) {
+                        const matchedIdx = [...tiers].reverse().findIndex((t) => val >= t.min_amount);
+                        setSelectedTierIdx(matchedIdx >= 0 ? tiers.length - 1 - matchedIdx : null);
+                      }
                     }}
                     placeholder="Enter amount"
                     className="bg-secondary/50 border-border"
-                    min={50000}
-                    max={100000000}
+                    min={minInvest}
                   />
-                  {parsedAmount > 0 && parsedAmount < 50000 && (
-                    <p className="text-xs text-destructive mt-1">Minimum investment is ৳50,000</p>
+                  {parsedAmount > 0 && parsedAmount < minInvest && (
+                    <p className="text-xs text-destructive mt-1">Minimum investment is {formatCurrencyFull(minInvest)}</p>
                   )}
                 </div>
 
-                {/* Quick Amounts */}
                 <div className="flex flex-wrap gap-2">
-                  {[50000, 100000, 200000, 500000, 1000000].map((val) => (
+                  {[5000, 10000, 50000, 100000, 500000].map((val) => (
                     <button
                       key={val}
                       type="button"
                       onClick={() => {
                         setAmount(val.toString());
-                        const matchedIdx = [...ext.tiers].reverse().findIndex((t) => val >= t.min);
-                        setSelectedTierIdx(matchedIdx >= 0 ? ext.tiers.length - 1 - matchedIdx : null);
+                        if (tiers.length > 0) {
+                          const matchedIdx = [...tiers].reverse().findIndex((t) => val >= t.min_amount);
+                          setSelectedTierIdx(matchedIdx >= 0 ? tiers.length - 1 - matchedIdx : null);
+                        }
                       }}
                       className="px-3 py-1 rounded-full text-xs border border-border bg-secondary/30 text-muted-foreground hover:border-primary/50 hover:text-foreground transition-all"
                     >
@@ -434,7 +534,6 @@ const BusinessDetail = () => {
                   ))}
                 </div>
 
-                {/* Summary */}
                 {canConfirm && (
                   <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-2">
                     <div className="flex justify-between text-sm">
@@ -448,7 +547,7 @@ const BusinessDetail = () => {
                     {selectedTier && (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Tier</span>
-                        <span className="font-medium text-foreground">{selectedTier.name} ({selectedTier.payout})</span>
+                        <span className="font-medium text-foreground">{selectedTier.name}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
@@ -463,11 +562,7 @@ const BusinessDetail = () => {
 
               <DialogFooter>
                 <Button variant="outline" onClick={() => setInvestOpen(false)}>Cancel</Button>
-                <Button
-                  className="glow-gold gap-2"
-                  disabled={!canConfirm}
-                  onClick={() => setStep("confirm")}
-                >
+                <Button className="glow-gold gap-2" disabled={!canConfirm} onClick={() => setStep("confirm")}>
                   Continue <ArrowRight className="w-4 h-4" />
                 </Button>
               </DialogFooter>
@@ -497,7 +592,9 @@ const BusinessDetail = () => {
                   {selectedTier && (
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Tier / Payout</span>
-                      <span className="text-sm font-medium text-foreground">{selectedTier.name} — {selectedTier.payout}</span>
+                      <span className="text-sm font-medium text-foreground">
+                        {selectedTier.name} — {selectedTier.payout_frequency ? selectedTier.payout_frequency.charAt(0).toUpperCase() + selectedTier.payout_frequency.slice(1) : "N/A"}
+                      </span>
                     </div>
                   )}
                 </div>

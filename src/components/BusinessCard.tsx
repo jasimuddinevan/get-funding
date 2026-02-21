@@ -2,8 +2,10 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, TrendingUp, ShieldCheck, Calendar } from "lucide-react";
-import { type Business } from "@/data/businesses";
 import { Link } from "react-router-dom";
+import type { Tables } from "@/integrations/supabase/types";
+
+type Business = Tables<"businesses">;
 
 interface BusinessCardProps {
   business: Business;
@@ -17,7 +19,7 @@ const formatCurrency = (val: number) => {
 };
 
 const BusinessCard = ({ business: biz, view }: BusinessCardProps) => {
-  const pct = Math.round((biz.funded / biz.fundingGoal) * 100);
+  const pct = biz.funding_goal ? Math.round(((biz.funded_amount ?? 0) / biz.funding_goal) * 100) : 0;
 
   if (view === "list") {
     return (
@@ -33,27 +35,33 @@ const BusinessCard = ({ business: biz, view }: BusinessCardProps) => {
                   <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors truncate">
                     {biz.name}
                   </h3>
-                  {biz.verified && <ShieldCheck className="w-4 h-4 text-primary shrink-0" />}
+                  {biz.status === "approved" && <ShieldCheck className="w-4 h-4 text-primary shrink-0" />}
                 </div>
                 <p className="text-sm text-muted-foreground truncate">{biz.description}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-6 shrink-0 flex-wrap">
-              <Badge variant="secondary" className="text-xs">{biz.industry}</Badge>
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <MapPin className="w-3 h-3" />{biz.location}
-              </span>
-              <span className="flex items-center gap-1 text-sm font-semibold text-primary">
-                <TrendingUp className="w-4 h-4" />{biz.revenueShare}%
-              </span>
-              <div className="w-32">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-muted-foreground">{formatCurrency(biz.funded)}</span>
-                  <span className="text-foreground font-medium">{pct}%</span>
+              {biz.industry && <Badge variant="secondary" className="text-xs">{biz.industry}</Badge>}
+              {biz.location && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin className="w-3 h-3" />{biz.location}
+                </span>
+              )}
+              {biz.revenue_share_pct != null && (
+                <span className="flex items-center gap-1 text-sm font-semibold text-primary">
+                  <TrendingUp className="w-4 h-4" />{biz.revenue_share_pct}%
+                </span>
+              )}
+              {biz.funding_goal && (
+                <div className="w-32">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-muted-foreground">{formatCurrency(biz.funded_amount ?? 0)}</span>
+                    <span className="text-foreground font-medium">{pct}%</span>
+                  </div>
+                  <Progress value={pct} className="h-1.5" />
                 </div>
-                <Progress value={pct} className="h-1.5" />
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -69,7 +77,7 @@ const BusinessCard = ({ business: biz, view }: BusinessCardProps) => {
             <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center text-primary font-bold text-sm">
               {biz.name.charAt(0)}
             </div>
-            {biz.verified && <ShieldCheck className="w-5 h-5 text-primary" />}
+            {biz.status === "approved" && <ShieldCheck className="w-5 h-5 text-primary" />}
           </div>
 
           <h3 className="font-display text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
@@ -78,31 +86,37 @@ const BusinessCard = ({ business: biz, view }: BusinessCardProps) => {
           <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{biz.description}</p>
 
           <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <Badge variant="secondary" className="text-xs">{biz.industry}</Badge>
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPin className="w-3 h-3" />{biz.location}
-            </span>
+            {biz.industry && <Badge variant="secondary" className="text-xs">{biz.industry}</Badge>}
+            {biz.location && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <MapPin className="w-3 h-3" />{biz.location}
+              </span>
+            )}
           </div>
 
           <div className="mt-auto">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1">
                 <TrendingUp className="w-4 h-4 text-primary" />
-                <span className="text-sm font-semibold text-primary">{biz.revenueShare}%</span>
+                <span className="text-sm font-semibold text-primary">{biz.revenue_share_pct ?? 0}%</span>
                 <span className="text-xs text-muted-foreground">share</span>
               </div>
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Calendar className="w-3 h-3" />{biz.foundedYear}
-              </span>
+              {biz.founded_year && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Calendar className="w-3 h-3" />{biz.founded_year}
+                </span>
+              )}
             </div>
 
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">{formatCurrency(biz.funded)} / {formatCurrency(biz.fundingGoal)}</span>
-                <span className="text-foreground font-medium">{pct}%</span>
+            {biz.funding_goal && (
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">{formatCurrency(biz.funded_amount ?? 0)} / {formatCurrency(biz.funding_goal)}</span>
+                  <span className="text-foreground font-medium">{pct}%</span>
+                </div>
+                <Progress value={pct} className="h-1.5" />
               </div>
-              <Progress value={pct} className="h-1.5" />
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>
