@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { ArrowRight, Mail, Phone, MapPin, Shield, TrendingUp, Building2, ExternalLink } from "lucide-react";
+import { ArrowRight, Mail, Phone, MapPin, Shield, ExternalLink } from "lucide-react";
 import { useLocale } from "@/contexts/LocaleContext";
 
 const Footer = () => {
@@ -12,20 +11,20 @@ const Footer = () => {
     <footer className="bg-card border-t border-border shadow-[0_-1px_30px_-15px_hsl(var(--foreground)/0.06)]">
       {/* CTA Banner */}
       <div className="container mx-auto px-4">
-        <div className="relative -mt-16 mb-12 rounded-2xl bg-primary/[0.08] border border-primary/20 p-8 sm:p-12 text-center shadow-lg shadow-primary/5 overflow-hidden">
+        <div className="relative -mt-16 mb-8 sm:mb-12 rounded-xl sm:rounded-2xl bg-primary/[0.08] border border-primary/20 p-6 sm:p-8 lg:p-12 text-center shadow-lg shadow-primary/5 overflow-hidden">
           <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--primary)/0.05),transparent_50%)]" />
           <div className="relative z-10">
-            <h3 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-3">
+            <h3 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-2 sm:mb-3">
               Ready to Start Investing?
             </h3>
-            <p className="text-muted-foreground max-w-lg mx-auto mb-6 text-sm">
+            <p className="text-muted-foreground max-w-lg mx-auto mb-5 sm:mb-6 text-xs sm:text-sm">
               Join thousands of investors earning consistent returns through verified revenue-sharing businesses.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button className="glow-gold shadow-md px-6 gap-2" asChild>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
+              <Button className="glow-gold shadow-md px-5 sm:px-6 gap-2 w-full sm:w-auto" asChild>
                 <Link to="/signup">Create Free Account <ArrowRight className="w-4 h-4" /></Link>
               </Button>
-              <Button variant="outline" className="shadow-sm px-6 gap-2" asChild>
+              <Button variant="outline" className="shadow-sm px-5 sm:px-6 gap-2 w-full sm:w-auto" asChild>
                 <Link to="/explore">Browse Businesses <ExternalLink className="w-4 h-4" /></Link>
               </Button>
             </div>
@@ -34,10 +33,10 @@ const Footer = () => {
       </div>
 
       {/* Main Footer Grid */}
-      <div className="container mx-auto px-4 pb-12">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 lg:gap-12">
+      <div className="container mx-auto px-4 pb-8 sm:pb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand */}
-          <div className="col-span-2 md:col-span-2">
+          <div className="sm:col-span-2">
             <Link to="/" className="flex items-center gap-2.5 mb-4">
               <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/20">
                 <span className="text-primary-foreground font-bold text-sm">FB</span>
@@ -49,17 +48,17 @@ const Footer = () => {
             <p className="text-sm text-muted-foreground leading-relaxed mb-5 max-w-xs">
               {t("footer.tagline")}
             </p>
-            <div className="space-y-2.5 text-sm text-muted-foreground">
+            <div className="space-y-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-primary/70" />
+                <Mail className="w-4 h-4 text-primary/70 shrink-0" />
                 <span>support@fundbridge.io</span>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-primary/70" />
+                <Phone className="w-4 h-4 text-primary/70 shrink-0" />
                 <span>+880 1700-000000</span>
               </div>
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-primary/70" />
+                <MapPin className="w-4 h-4 text-primary/70 shrink-0" />
                 <span>Dhaka, Bangladesh</span>
               </div>
             </div>
@@ -67,8 +66,8 @@ const Footer = () => {
 
           {/* Platform */}
           <div>
-            <h4 className="font-semibold text-foreground text-sm mb-4">Platform</h4>
-            <ul className="space-y-2.5">
+            <h4 className="font-semibold text-foreground text-sm mb-3 sm:mb-4">Platform</h4>
+            <ul className="space-y-2">
               <li><Link to="/explore" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Explore Businesses</Link></li>
               <li><Link to="/signup" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Start Investing</Link></li>
               <li><Link to="/signup" className="text-sm text-muted-foreground hover:text-foreground transition-colors">List Your Business</Link></li>
@@ -79,8 +78,8 @@ const Footer = () => {
 
           {/* Company */}
           <div>
-            <h4 className="font-semibold text-foreground text-sm mb-4">Company</h4>
-            <ul className="space-y-2.5">
+            <h4 className="font-semibold text-foreground text-sm mb-3 sm:mb-4">Company</h4>
+            <ul className="space-y-2">
               <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About Us</Link></li>
               <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Careers</Link></li>
               <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Press & Media</Link></li>
@@ -89,10 +88,10 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Resources & Newsletter */}
+          {/* Resources */}
           <div>
-            <h4 className="font-semibold text-foreground text-sm mb-4">Resources</h4>
-            <ul className="space-y-2.5 mb-6">
+            <h4 className="font-semibold text-foreground text-sm mb-3 sm:mb-4">Resources</h4>
+            <ul className="space-y-2">
               <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Help Center</Link></li>
               <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQs</Link></li>
               <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</Link></li>
@@ -103,14 +102,14 @@ const Footer = () => {
         </div>
 
         {/* Newsletter */}
-        <div className="mt-10 rounded-xl border border-border bg-secondary/30 p-6 flex flex-col sm:flex-row items-center gap-4">
-          <div className="flex-1">
-            <h4 className="font-semibold text-foreground text-sm mb-1">{t("footer.stayUpdated")}</h4>
+        <div className="mt-8 sm:mt-10 rounded-xl border border-border bg-secondary/30 p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+          <div className="flex-1 min-w-0">
+            <h4 className="font-semibold text-foreground text-sm mb-0.5 sm:mb-1">{t("footer.stayUpdated")}</h4>
             <p className="text-xs text-muted-foreground">{t("footer.newsletter")}</p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
-            <Input placeholder={t("footer.emailPlaceholder")} className="bg-card h-9 text-sm shadow-sm w-full sm:w-60" />
-            <Button size="sm" className="h-9 px-4 shadow-sm glow-gold">
+            <Input placeholder={t("footer.emailPlaceholder")} className="bg-card h-9 text-sm shadow-sm w-full sm:w-52 lg:w-60" />
+            <Button size="sm" className="h-9 px-4 shadow-sm glow-gold shrink-0">
               Subscribe
             </Button>
           </div>
@@ -119,12 +118,12 @@ const Footer = () => {
 
       {/* Bottom Bar */}
       <div className="border-t border-border">
-        <div className="container mx-auto px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">{t("footer.rights")}</p>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="container mx-auto px-4 py-4 sm:py-5 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+          <p className="text-[11px] sm:text-xs text-muted-foreground">{t("footer.rights")}</p>
+          <div className="flex items-center gap-3 sm:gap-4 text-[11px] sm:text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
-              <Shield className="w-3.5 h-3.5 text-primary" />
-              <span>Admin-Verified Businesses</span>
+              <Shield className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
+              <span>Admin-Verified</span>
             </div>
             <span className="w-px h-3 bg-border" />
             <span>Bangladesh 🇧🇩 & Global 🌍</span>

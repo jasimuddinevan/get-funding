@@ -38,20 +38,20 @@ const TestimonialsSection = () => {
   const isBn = t("testimonials.label") !== "Testimonials";
 
   return (
-    <section className="py-24">
+    <section className="py-16 sm:py-24">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-16"
         >
           <span className="text-xs font-semibold uppercase tracking-widest text-primary mb-3 block">{t("testimonials.label")}</span>
-          <h2 className="font-display text-4xl sm:text-5xl font-bold text-foreground">{t("testimonials.title")}</h2>
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">{t("testimonials.title")}</h2>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {testimonials.map((tm, i) => (
             <motion.div
               key={tm.nameEn}
@@ -59,19 +59,19 @@ const TestimonialsSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
               viewport={{ once: true }}
-              className="relative rounded-2xl p-6 bg-card border border-border/60 shadow-md shadow-foreground/[0.03] hover:shadow-lg transition-shadow"
+              className="relative rounded-xl sm:rounded-2xl p-5 sm:p-6 bg-card border border-border/60 shadow-md shadow-foreground/[0.03] hover:shadow-lg transition-shadow"
             >
-              <Quote className="w-8 h-8 text-primary/15 absolute top-5 right-5" />
-              <div className="flex gap-1 mb-4">
+              <Quote className="w-6 h-6 sm:w-8 sm:h-8 text-primary/15 absolute top-4 sm:top-5 right-4 sm:right-5" />
+              <div className="flex gap-1 mb-3 sm:mb-4">
                 {Array.from({ length: tm.rating }).map((_, j) => (
-                  <Star key={j} className="w-4 h-4 fill-primary text-primary" />
+                  <Star key={j} className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-primary text-primary" />
                 ))}
               </div>
-              <p className="text-foreground mb-6 leading-relaxed text-sm">
+              <p className="text-foreground mb-5 sm:mb-6 leading-relaxed text-sm">
                 "{isBn ? tm.quoteBn : tm.quote}"
               </p>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shadow-inner">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs sm:text-sm shadow-inner shrink-0">
                   {(isBn ? tm.name : tm.nameEn).charAt(0)}
                 </div>
                 <div>
