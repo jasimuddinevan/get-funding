@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Mail, Phone, MapPin, Shield, ExternalLink } from "lucide-react";
 import { useLocale } from "@/contexts/LocaleContext";
@@ -34,7 +33,7 @@ const Footer = () => {
 
       {/* Main Footer Grid */}
       <div className="container mx-auto px-4 pb-8 sm:pb-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="sm:col-span-2">
             <Link to="/" className="flex items-center gap-2.5 mb-4">
@@ -86,33 +85,7 @@ const Footer = () => {
               <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Blog</Link></li>
               <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact Us</Link></li>
             </ul>
-          </div>
-
-          {/* Resources */}
-          <div>
-            <h4 className="font-semibold text-foreground text-sm mb-3 sm:mb-4">Resources</h4>
-            <ul className="space-y-2">
-              <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Help Center</Link></li>
-              <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQs</Link></li>
-              <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Terms of Service</Link></li>
-              <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Cookie Policy</Link></li>
-            </ul>
-          </div>
         </div>
-
-        {/* Newsletter */}
-        <div className="mt-8 sm:mt-10 rounded-xl border border-border bg-secondary/30 p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-          <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-foreground text-sm mb-0.5 sm:mb-1">{t("footer.stayUpdated")}</h4>
-            <p className="text-xs text-muted-foreground">{t("footer.newsletter")}</p>
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Input placeholder={t("footer.emailPlaceholder")} className="bg-card h-9 text-sm shadow-sm w-full sm:w-52 lg:w-60" />
-            <Button size="sm" className="h-9 px-4 shadow-sm glow-gold shrink-0">
-              Subscribe
-            </Button>
-          </div>
         </div>
       </div>
 
