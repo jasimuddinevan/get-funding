@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Globe, MapPin } from "lucide-react";
+import { Menu, X, Globe, MapPin, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocale } from "@/contexts/LocaleContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { region, setRegion, t } = useLocale();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass">
@@ -38,6 +40,14 @@ const Navbar = () => {
             ) : (
               <><Globe className="w-3.5 h-3.5" />{t("nav.global")}</>
             )}
+          </button>
+
+          <button
+            onClick={toggleTheme}
+            className="flex items-center justify-center w-8 h-8 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all"
+            aria-label="Toggle theme"
+          >
+            {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
           </button>
 
           <Button variant="ghost" size="sm" asChild>
@@ -71,6 +81,12 @@ const Navbar = () => {
                 className="flex items-center gap-1.5 py-2 text-sm text-muted-foreground"
               >
                 {region === "bd" ? t("nav.bd") : t("nav.global")}
+              </button>
+              <button
+                onClick={toggleTheme}
+                className="flex items-center gap-1.5 py-2 text-sm text-muted-foreground"
+              >
+                {theme === "light" ? <><Moon className="w-4 h-4" /> Dark Mode</> : <><Sun className="w-4 h-4" /> Light Mode</>}
               </button>
               <div className="flex gap-2 pt-2">
                 <Button variant="outline" size="sm" className="flex-1" asChild>

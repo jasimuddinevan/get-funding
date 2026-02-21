@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LocaleProvider, useLocale } from "@/contexts/LocaleContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Index from "./pages/Index";
 import Explore from "./pages/Explore";
 import BusinessDetail from "./pages/BusinessDetail";
@@ -38,11 +39,13 @@ const AppShell = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <LocaleProvider>
-        <AppShell />
-      </LocaleProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <LocaleProvider>
+          <AppShell />
+        </LocaleProvider>
+      </AuthProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
