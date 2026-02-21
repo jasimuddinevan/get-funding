@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   FileSearch, CheckCircle2, XCircle, Eye, Clock, MapPin, TrendingUp,
-  Building2, Globe, Calendar, DollarSign, Loader2,
+  Building2, Globe, Calendar, DollarSign, Loader2, Star,
 } from "lucide-react";
 
 type BusinessStatus = "draft" | "pending" | "under_review" | "approved" | "rejected" | "suspended";
@@ -38,6 +38,7 @@ interface Business {
   min_investment: number | null;
   max_investment: number | null;
   status: BusinessStatus;
+  featured: boolean;
   created_at: string;
   owner_id: string;
 }
@@ -198,6 +199,24 @@ const BusinessReviews = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const newVal = !biz.featured;
+                          await supabase.from("businesses").update({ featured: newVal }).eq("id", biz.id);
+                          setBusinesses((prev) => prev.map((b) => b.id === biz.id ? { ...b, featured: newVal } : b));
+                          toast.success(newVal ? `"${biz.name}" featured on homepage` : `"${biz.name}" removed from featured`);
+                        }}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border transition-all ${
+                          biz.featured
+                            ? "bg-primary/10 text-primary border-primary/30"
+                            : "bg-secondary/50 text-muted-foreground border-border hover:border-primary/30"
+                        }`}
+                        title={biz.featured ? "Remove from featured" : "Feature on homepage"}
+                      >
+                        <Star className={`w-3 h-3 ${biz.featured ? "fill-primary" : ""}`} />
+                        {biz.featured ? "Featured" : "Feature"}
+                      </button>
                       {biz.revenue_share_pct && (
                         <span className="flex items-center gap-1 text-xs font-medium text-primary">
                           <TrendingUp className="w-3 h-3" />{biz.revenue_share_pct}%

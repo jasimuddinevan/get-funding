@@ -1,21 +1,52 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { MapPin, TrendingUp, ShieldCheck, ArrowRight } from "lucide-react";
+import { MapPin, TrendingUp, ShieldCheck, ArrowRight, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLocale } from "@/contexts/LocaleContext";
+import { supabase } from "@/integrations/supabase/client";
 
-const businesses = [
-  { id: "1", name: "GreenTech Solutions", industry: "Clean Energy", location: "Dhaka, BD", revenueShare: 12, fundingGoal: 5000000, funded: 3750000, verified: true },
-  { id: "2", name: "AgroFresh Ltd", industry: "Agriculture", location: "Chittagong, BD", revenueShare: 15, fundingGoal: 2000000, funded: 1400000, verified: true },
-  { id: "3", name: "FinEdge Global", industry: "FinTech", location: "Singapore", revenueShare: 10, fundingGoal: 10000000, funded: 6500000, verified: true },
-  { id: "4", name: "MediCare Plus", industry: "Healthcare", location: "Dhaka, BD", revenueShare: 14, fundingGoal: 3000000, funded: 2100000, verified: true },
-];
+interface FeaturedBusiness {
+  id: string;
+  name: string;
+  industry: string | null;
+  location: string | null;
+  revenue_share_pct: number | null;
+  funding_goal: number | null;
+  funded_amount: number | null;
+  status: string;
+}
+
+const formatCurrency = (val: number) => {
+  if (val >= 10000000) return `৳${(val / 10000000).toFixed(1)} Cr`;
+  if (val >= 100000) return `৳${(val / 100000).toFixed(1)} Lakh`;
+  return `৳${val.toLocaleString()}`;
+};
 
 const FeaturedSection = () => {
   const { t } = useLocale();
+  const [businesses, setBusinesses] = useState<FeaturedBusiness[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      const { data } = await supabase
+        .from("businesses")
+        .select("id, name, industry, location, revenue_share_pct, funding_goal, funded_amount, status")
+        .eq("featured", true)
+        .eq("status", "approved")
+        .order("created_at", { ascending: false })
+        .limit(16);
+      setBusinesses((data as FeaturedBusiness[]) ?? []);
+      setLoading(false);
+    };
+    fetchFeatured();
+  }, []);
+
+  if (!loading && businesses.length === 0) return null;
 
   return (
     <section className="py-24 relative">
@@ -33,57 +64,72 @@ const FeaturedSection = () => {
           <p className="text-muted-foreground max-w-xl mx-auto">{t("featured.subtitle")}</p>
         </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {businesses.map((biz, i) => (
-            <motion.div
-              key={biz.name}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              viewport={{ once: true }}
-            >
-              <Link to={`/business/${biz.id}`}>
-                <Card className="bg-card border-border/60 shadow-md shadow-foreground/[0.03] hover:shadow-xl hover:shadow-primary/[0.08] hover:border-primary/30 transition-all duration-300 cursor-pointer group h-full">
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shadow-inner">
-                        {biz.name.charAt(0)}
-                      </div>
-                      {biz.verified && <ShieldCheck className="w-5 h-5 text-primary" />}
-                    </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {businesses.map((biz, i) => {
+              const fundedPct = biz.funding_goal && biz.funded_amount
+                ? Math.round((biz.funded_amount / biz.funding_goal) * 100)
+                : 0;
+              return (
+                <motion.div
+                  key={biz.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: i * 0.05 }}
+                  viewport={{ once: true }}
+                >
+                  <Link to={`/business/${biz.id}`}>
+                    <Card className="bg-card border-border/60 shadow-md shadow-foreground/[0.03] hover:shadow-xl hover:shadow-primary/[0.08] hover:border-primary/30 transition-all duration-300 cursor-pointer group h-full">
+                      <CardContent className="p-5">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shadow-inner">
+                            {biz.name.charAt(0)}
+                          </div>
+                          <ShieldCheck className="w-5 h-5 text-primary" />
+                        </div>
 
-                    <h3 className="font-display text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
-                      {biz.name}
-                    </h3>
+                        <h3 className="font-display text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors truncate">
+                          {biz.name}
+                        </h3>
 
-                    <div className="flex items-center gap-2 mb-4">
-                      <Badge variant="secondary" className="text-xs shadow-sm">{biz.industry}</Badge>
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPin className="w-3 h-3" />{biz.location}
-                      </span>
-                    </div>
+                        <div className="flex items-center gap-2 mb-4">
+                          {biz.industry && <Badge variant="secondary" className="text-xs shadow-sm">{biz.industry}</Badge>}
+                          {biz.location && (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground truncate">
+                              <MapPin className="w-3 h-3 shrink-0" />{biz.location}
+                            </span>
+                          )}
+                        </div>
 
-                    <div className="flex items-center gap-1 mb-3">
-                      <TrendingUp className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-semibold text-primary">{biz.revenueShare}%</span>
-                      <span className="text-xs text-muted-foreground">{t("featured.revenueShare")}</span>
-                    </div>
+                        {biz.revenue_share_pct && (
+                          <div className="flex items-center gap-1 mb-3">
+                            <TrendingUp className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-semibold text-primary">{biz.revenue_share_pct}%</span>
+                            <span className="text-xs text-muted-foreground">{t("featured.revenueShare")}</span>
+                          </div>
+                        )}
 
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">{t("featured.funded")}</span>
-                        <span className="text-foreground font-medium">
-                          {Math.round((biz.funded / biz.fundingGoal) * 100)}%
-                        </span>
-                      </div>
-                      <Progress value={(biz.funded / biz.fundingGoal) * 100} className="h-1.5" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
+                        {biz.funding_goal && (
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">{t("featured.funded")}</span>
+                              <span className="text-foreground font-medium">{fundedPct}%</span>
+                            </div>
+                            <Progress value={fundedPct} className="h-1.5" />
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
 
         <div className="text-center mt-10">
           <Button variant="outline" size="lg" className="gap-2 shadow-sm" asChild>

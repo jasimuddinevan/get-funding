@@ -129,6 +129,7 @@ export type Database = {
           created_at: string
           current_revenue: number | null
           description: string | null
+          featured: boolean
           financial_projection: string | null
           founded_year: number | null
           funded_amount: number | null
@@ -161,6 +162,7 @@ export type Database = {
           created_at?: string
           current_revenue?: number | null
           description?: string | null
+          featured?: boolean
           financial_projection?: string | null
           founded_year?: number | null
           funded_amount?: number | null
@@ -193,6 +195,7 @@ export type Database = {
           created_at?: string
           current_revenue?: number | null
           description?: string | null
+          featured?: boolean
           financial_projection?: string | null
           founded_year?: number | null
           funded_amount?: number | null
