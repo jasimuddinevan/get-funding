@@ -13,6 +13,11 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
 import BusinessOnboarding from "./pages/BusinessOnboarding";
+import InvestorDashboard from "./pages/investor/InvestorDashboard";
+import PortfolioOverview from "./pages/investor/PortfolioOverview";
+import InvestmentHistory from "./pages/investor/InvestmentHistory";
+import Watchlist from "./pages/investor/Watchlist";
+import Notifications from "./pages/investor/Notifications";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +36,12 @@ const AppShell = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/onboarding/business" element={<BusinessOnboarding />} />
+            <Route path="/investor" element={<InvestorDashboard />}>
+              <Route index element={<PortfolioOverview />} />
+              <Route path="investments" element={<InvestmentHistory />} />
+              <Route path="watchlist" element={<Watchlist />} />
+              <Route path="notifications" element={<Notifications />} />
+            </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
