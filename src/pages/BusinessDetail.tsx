@@ -1,9 +1,10 @@
-import { useParams, Link } from "react-router-dom";
+import { useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, MapPin, TrendingUp, ShieldCheck, Calendar, Globe, Users,
   DollarSign, BarChart3, FileText, Building2, Target, Percent, Clock,
-  ArrowRight, Heart, Share2, MessageSquare
+  ArrowRight, Heart, Share2, MessageSquare, Loader2, CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +12,15 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { MOCK_BUSINESSES } from "@/data/businesses";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const EXTENDED_DATA: Record<string, {
   pitch: string;
@@ -22,7 +29,7 @@ const EXTENDED_DATA: Record<string, {
   advantage: string;
   team: { name: string; role: string; bio: string }[];
   financials: { revenue: string; growth: string; margin: string; projection: string };
-  tiers: { name: string; min: string; share: string; payout: string }[];
+  tiers: { name: string; min: number; share: number; payout: string }[];
   qna: { q: string; a: string }[];
 }> = {
   default: {
@@ -37,9 +44,9 @@ const EXTENDED_DATA: Record<string, {
     ],
     financials: { revenue: "৳2.5 Cr/year", growth: "45% YoY", margin: "22%", projection: "৳8 Cr by 2028" },
     tiers: [
-      { name: "Starter", min: "৳50,000", share: "8%", payout: "Quarterly" },
-      { name: "Growth", min: "৳2,00,000", share: "12%", payout: "Monthly" },
-      { name: "Premium", min: "৳10,00,000", share: "16%", payout: "Monthly" },
+      { name: "Starter", min: 50000, share: 8, payout: "Quarterly" },
+      { name: "Growth", min: 200000, share: 12, payout: "Monthly" },
+      { name: "Premium", min: 1000000, share: 16, payout: "Monthly" },
     ],
     qna: [
       { q: "How are revenue shares calculated?", a: "Revenue shares are calculated on gross revenue before expenses. Payouts are automated through FundBridge based on verified financial reports." },
@@ -55,10 +62,20 @@ const formatCurrency = (val: number) => {
   return `৳${val.toLocaleString()}`;
 };
 
+const formatCurrencyFull = (val: number) => `৳${val.toLocaleString()}`;
+
 const BusinessDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user, userRole } = useAuth();
   const business = MOCK_BUSINESSES.find((b) => b.id === id);
   const ext = EXTENDED_DATA.default;
+
+  const [investOpen, setInvestOpen] = useState(false);
+  const [selectedTierIdx, setSelectedTierIdx] = useState<number | null>(null);
+  const [amount, setAmount] = useState("");
+  const [step, setStep] = useState<"select" | "confirm" | "success">("select");
+  const [submitting, setSubmitting] = useState(false);
 
   if (!business) {
     return (
@@ -75,6 +92,50 @@ const BusinessDetail = () => {
   }
 
   const fundedPct = Math.round((business.funded / business.fundingGoal) * 100);
+
+  const openInvestDialog = (tierIdx?: number) => {
+    if (!user) {
+      toast.error("Please sign in to invest");
+      navigate("/login");
+      return;
+    }
+    if (userRole !== "investor") {
+      toast.error("Only investors can make investments");
+      return;
+    }
+    setSelectedTierIdx(tierIdx ?? null);
+    setAmount(tierIdx != null ? ext.tiers[tierIdx].min.toString() : "");
+    setStep("select");
+    setInvestOpen(true);
+  };
+
+  const selectedTier = selectedTierIdx != null ? ext.tiers[selectedTierIdx] : null;
+  const parsedAmount = parseInt(amount.replace(/,/g, ""), 10) || 0;
+  const revenueShareForAmount = selectedTier?.share ?? business.revenueShare;
+
+  const canConfirm = parsedAmount >= (selectedTier?.min ?? 50000) && parsedAmount <= 100000000;
+
+  const handleConfirmInvest = async () => {
+    if (!user || !canConfirm) return;
+    setSubmitting(true);
+
+    const { error } = await supabase.from("investments").insert({
+      investor_id: user.id,
+      business_id: business.id,
+      amount: parsedAmount,
+      revenue_share_pct: revenueShareForAmount,
+      status: "active",
+    });
+
+    if (error) {
+      toast.error(error.message);
+      setSubmitting(false);
+      return;
+    }
+
+    setStep("success");
+    setSubmitting(false);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,7 +216,7 @@ const BusinessDetail = () => {
                   </div>
                 </div>
 
-                <Button className="w-full glow-gold h-12 text-base gap-2">
+                <Button className="w-full glow-gold h-12 text-base gap-2" onClick={() => openInvestDialog()}>
                   Invest Now <ArrowRight className="w-5 h-5" />
                 </Button>
                 <p className="text-[11px] text-muted-foreground text-center mt-2">
@@ -231,18 +292,23 @@ const BusinessDetail = () => {
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Min. Investment</span>
-                            <span className="font-medium text-foreground">{tier.min}</span>
+                            <span className="font-medium text-foreground">{formatCurrencyFull(tier.min)}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Revenue Share</span>
-                            <span className="font-semibold text-primary">{tier.share}</span>
+                            <span className="font-semibold text-primary">{tier.share}%</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Payout</span>
                             <span className="font-medium text-foreground flex items-center gap-1"><Clock className="w-3 h-3" />{tier.payout}</span>
                           </div>
                         </div>
-                        <Button className={`w-full mt-4 ${i === 1 ? "glow-gold" : ""}`} variant={i === 1 ? "default" : "outline"} size="sm">
+                        <Button
+                          className={`w-full mt-4 ${i === 1 ? "glow-gold" : ""}`}
+                          variant={i === 1 ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => openInvestDialog(i)}
+                        >
                           Select Tier
                         </Button>
                       </div>
@@ -286,6 +352,188 @@ const BusinessDetail = () => {
         </div>
       </main>
       <Footer />
+
+      {/* Investment Dialog */}
+      <Dialog open={investOpen} onOpenChange={(open) => { if (!open) { setInvestOpen(false); setStep("select"); } }}>
+        <DialogContent className="max-w-md bg-card border-border">
+          {step === "select" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-display text-xl flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                  Invest in {business.name}
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-5 py-4">
+                {/* Tier Selection */}
+                <div>
+                  <Label className="mb-2 block text-sm">Select a Tier</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {ext.tiers.map((tier, i) => (
+                      <button
+                        key={tier.name}
+                        type="button"
+                        onClick={() => {
+                          setSelectedTierIdx(i);
+                          if (parsedAmount < tier.min) setAmount(tier.min.toString());
+                        }}
+                        className={`p-3 rounded-xl border text-center transition-all ${
+                          selectedTierIdx === i
+                            ? "border-primary bg-primary/10"
+                            : "border-border bg-secondary/30 hover:border-primary/40"
+                        }`}
+                      >
+                        <div className="text-xs font-semibold text-foreground">{tier.name}</div>
+                        <div className="text-primary font-bold text-sm mt-1">{tier.share}%</div>
+                        <div className="text-[10px] text-muted-foreground">≥ {formatCurrencyFull(tier.min)}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Amount Input */}
+                <div>
+                  <Label htmlFor="investAmount" className="mb-1.5 block text-sm">Investment Amount (৳)</Label>
+                  <Input
+                    id="investAmount"
+                    type="number"
+                    value={amount}
+                    onChange={(e) => {
+                      setAmount(e.target.value);
+                      // Auto-select tier based on amount
+                      const val = parseInt(e.target.value, 10) || 0;
+                      const matchedIdx = [...ext.tiers].reverse().findIndex((t) => val >= t.min);
+                      setSelectedTierIdx(matchedIdx >= 0 ? ext.tiers.length - 1 - matchedIdx : null);
+                    }}
+                    placeholder="Enter amount"
+                    className="bg-secondary/50 border-border"
+                    min={50000}
+                    max={100000000}
+                  />
+                  {parsedAmount > 0 && parsedAmount < 50000 && (
+                    <p className="text-xs text-destructive mt-1">Minimum investment is ৳50,000</p>
+                  )}
+                </div>
+
+                {/* Quick Amounts */}
+                <div className="flex flex-wrap gap-2">
+                  {[50000, 100000, 200000, 500000, 1000000].map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => {
+                        setAmount(val.toString());
+                        const matchedIdx = [...ext.tiers].reverse().findIndex((t) => val >= t.min);
+                        setSelectedTierIdx(matchedIdx >= 0 ? ext.tiers.length - 1 - matchedIdx : null);
+                      }}
+                      className="px-3 py-1 rounded-full text-xs border border-border bg-secondary/30 text-muted-foreground hover:border-primary/50 hover:text-foreground transition-all"
+                    >
+                      {formatCurrency(val)}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Summary */}
+                {canConfirm && (
+                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Amount</span>
+                      <span className="font-semibold text-foreground">{formatCurrencyFull(parsedAmount)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Revenue Share</span>
+                      <span className="font-semibold text-primary">{revenueShareForAmount}%</span>
+                    </div>
+                    {selectedTier && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Tier</span>
+                        <span className="font-medium text-foreground">{selectedTier.name} ({selectedTier.payout})</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Est. Monthly Return</span>
+                      <span className="font-semibold text-foreground">
+                        ~{formatCurrencyFull(Math.round((parsedAmount * revenueShareForAmount) / 100 / 12))}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setInvestOpen(false)}>Cancel</Button>
+                <Button
+                  className="glow-gold gap-2"
+                  disabled={!canConfirm}
+                  onClick={() => setStep("confirm")}
+                >
+                  Continue <ArrowRight className="w-4 h-4" />
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {step === "confirm" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-display text-xl">Confirm Investment</DialogTitle>
+              </DialogHeader>
+              <div className="py-6 space-y-4">
+                <div className="rounded-xl border border-border bg-secondary/20 p-5 space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Business</span>
+                    <span className="text-sm font-semibold text-foreground">{business.name}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Amount</span>
+                    <span className="text-sm font-bold text-foreground">{formatCurrencyFull(parsedAmount)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Revenue Share</span>
+                    <span className="text-sm font-bold text-primary">{revenueShareForAmount}%</span>
+                  </div>
+                  {selectedTier && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Tier / Payout</span>
+                      <span className="text-sm font-medium text-foreground">{selectedTier.name} — {selectedTier.payout}</span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  By confirming, you agree to the revenue-sharing terms. This action cannot be undone.
+                </p>
+              </div>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={() => setStep("select")} disabled={submitting}>Back</Button>
+                <Button className="glow-gold gap-2" onClick={handleConfirmInvest} disabled={submitting}>
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                  {submitting ? "Processing..." : "Confirm Investment"}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {step === "success" && (
+            <div className="py-8 text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-green-500/15 flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-8 h-8 text-green-500" />
+              </div>
+              <h3 className="font-display text-2xl font-bold text-foreground">Investment Successful!</h3>
+              <p className="text-sm text-muted-foreground">
+                You've invested <strong className="text-foreground">{formatCurrencyFull(parsedAmount)}</strong> in{" "}
+                <strong className="text-foreground">{business.name}</strong> with a{" "}
+                <strong className="text-primary">{revenueShareForAmount}%</strong> revenue share.
+              </p>
+              <div className="flex gap-3 justify-center pt-2">
+                <Button variant="outline" onClick={() => setInvestOpen(false)}>Close</Button>
+                <Button onClick={() => navigate("/investor")}>View Portfolio</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
