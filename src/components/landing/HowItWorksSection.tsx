@@ -1,28 +1,16 @@
 import { motion } from "framer-motion";
 import { Search, FileCheck, TrendingUp } from "lucide-react";
-
-const steps = [
-  {
-    icon: Search,
-    step: "01",
-    title: "Explore Businesses",
-    description: "Browse admin-verified businesses with transparent financials, growth metrics, and revenue sharing terms.",
-  },
-  {
-    icon: FileCheck,
-    step: "02",
-    title: "Invest with Confidence",
-    description: "Choose your investment tier, review revenue sharing terms, and invest securely through our platform.",
-  },
-  {
-    icon: TrendingUp,
-    step: "03",
-    title: "Earn Revenue Share",
-    description: "Receive regular revenue-based returns as the business grows. Track your earnings in real-time.",
-  },
-];
+import { useLocale } from "@/contexts/LocaleContext";
 
 const HowItWorksSection = () => {
+  const { t } = useLocale();
+
+  const steps = [
+    { icon: Search, step: "01", title: t("hiw.step1.title"), description: t("hiw.step1.desc") },
+    { icon: FileCheck, step: "02", title: t("hiw.step2.title"), description: t("hiw.step2.desc") },
+    { icon: TrendingUp, step: "03", title: t("hiw.step3.title"), description: t("hiw.step3.desc") },
+  ];
+
   return (
     <section className="py-24">
       <div className="container mx-auto px-4">
@@ -33,19 +21,13 @@ const HowItWorksSection = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="text-xs font-semibold uppercase tracking-widest text-primary mb-3 block">How It Works</span>
-          <h2 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-4">
-            Three Simple Steps
-          </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            From discovery to returns — our streamlined process makes investing simple and transparent.
-          </p>
+          <span className="text-xs font-semibold uppercase tracking-widest text-primary mb-3 block">{t("hiw.label")}</span>
+          <h2 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-4">{t("hiw.title")}</h2>
+          <p className="text-muted-foreground max-w-xl mx-auto">{t("hiw.subtitle")}</p>
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-8 relative">
-          {/* Connecting line */}
           <div className="hidden md:block absolute top-16 left-[20%] right-[20%] h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-
           {steps.map((step, i) => (
             <motion.div
               key={step.step}

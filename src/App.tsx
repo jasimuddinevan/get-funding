@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { LocaleProvider, useLocale } from "@/contexts/LocaleContext";
 import Index from "./pages/Index";
 import Explore from "./pages/Explore";
 import BusinessDetail from "./pages/BusinessDetail";
@@ -13,9 +14,10 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
+const AppShell = () => {
+  const { locale } = useLocale();
+  return (
+    <div className={locale === "bn" ? "font-bengali" : "font-sans"}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -26,11 +28,20 @@ const App = () => (
             <Route path="/business/:id" element={<BusinessDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+    </div>
+  );
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <LocaleProvider>
+        <AppShell />
+      </LocaleProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
