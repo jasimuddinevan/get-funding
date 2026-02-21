@@ -63,7 +63,7 @@ const AppShell = () => {
   );
 };
 
-// App root with providers
+// App root — LocaleProvider wraps AppShell so useLocale is available
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
