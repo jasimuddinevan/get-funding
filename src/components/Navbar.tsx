@@ -14,9 +14,11 @@ const Navbar = () => {
   const { user, userRole, signOut } = useAuth();
 
   const navLinks = [
-    { to: "/explore", label: "Explore" },
-    ...(user && userRole === "investor" ? [{ to: "/investor", label: "Dashboard" }] : []),
-    ...(user && userRole === "business_owner" ? [{ to: "/onboarding/business", label: "My Business" }] : []),
+    { to: "/", label: "Home" },
+    { to: "/explore", label: "Companies" },
+    { to: "/onboarding/business", label: "Get Listed" },
+    { to: "/investor", label: "Investors" },
+    { to: "/about", label: "About" },
     ...(user && userRole === "admin" ? [{ to: "/admin", label: "Admin Panel" }] : []),
   ];
 
@@ -75,14 +77,6 @@ const Navbar = () => {
                 {link.label}
               </Link>
             ))}
-            {!user && (
-              <Link
-                to="/signup"
-                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 rounded-lg transition-all"
-              >
-                List Your Business
-              </Link>
-            )}
           </div>
 
           <div className="hidden md:flex items-center gap-2">
@@ -124,11 +118,6 @@ const Navbar = () => {
                     {link.label}
                   </Link>
                 ))}
-                {!user && (
-                  <Link to="/signup" className="text-sm py-2.5 px-3 rounded-lg text-muted-foreground hover:bg-secondary/60" onClick={() => setMobileOpen(false)}>
-                    List Your Business
-                  </Link>
-                )}
                 <div className="flex items-center justify-between py-2 px-3">
                   <button onClick={() => setRegion(region === "bd" ? "global" : "bd")} className="text-sm text-muted-foreground flex items-center gap-1.5">
                     {region === "bd" ? <><MapPin className="w-3.5 h-3.5" /> Bangladesh</> : <><Globe className="w-3.5 h-3.5" /> Global</>}
