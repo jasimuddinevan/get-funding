@@ -33,7 +33,7 @@ const Footer = () => {
 
       {/* Main Footer Grid */}
       <div className="container mx-auto px-4 pb-8 sm:pb-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="sm:col-span-2">
             <Link to="/" className="flex items-center gap-2.5 mb-4">
@@ -61,6 +61,18 @@ const Footer = () => {
                 <span>Dhaka, Bangladesh</span>
               </div>
             </div>
+          </div>
+
+          {/* Resources */}
+          <div>
+            <h4 className="font-semibold text-foreground text-sm mb-3 sm:mb-4">Resources</h4>
+            <ul className="space-y-2">
+              <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Help Center</Link></li>
+              <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQs</Link></li>
+              <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Investment Guide</Link></li>
+              <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Terms of Service</Link></li>
+              <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</Link></li>
+            </ul>
           </div>
 
           {/* Platform */}
