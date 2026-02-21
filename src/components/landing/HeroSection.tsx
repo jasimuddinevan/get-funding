@@ -25,20 +25,12 @@ const HeroSection = () => {
             </div>
 
             <h1 className="font-display text-3xl sm:text-5xl lg:text-7xl font-bold leading-tight mb-4 sm:mb-6 px-2">
-              {t("hero.title1")}{" "}
-              <span className="text-gradient-gold">{t("hero.titleHighlight")}</span>
+              <span className="text-gradient-gold">{t("hero.getInvestment")}</span>
             </h1>
 
             <p className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2">
               {t("hero.subtitle")}
             </p>
-
-            <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-primary/[0.08] border border-primary/20 mb-8 sm:mb-10 shadow-sm">
-              <Rocket className="w-4 h-4 text-primary shrink-0" />
-              <span className="text-sm sm:text-base font-semibold text-primary">
-                {t("hero.getInvestment")}
-              </span>
-            </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4 sm:px-0">
               <Button size="lg" className="glow-gold text-sm sm:text-base px-6 sm:px-8 h-12 shadow-lg shadow-primary/20 w-full sm:w-auto" asChild>
