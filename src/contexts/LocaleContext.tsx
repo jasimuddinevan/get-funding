@@ -33,6 +33,7 @@ const translations: Record<string, Record<Locale, string>> = {
   "hero.adminVerified": { en: "Admin Verified", bn: "প্রশাসক যাচাইকৃত" },
   "hero.revenueBased": { en: "Revenue Based Returns", bn: "রাজস্ব ভিত্তিক রিটার্ন" },
   "hero.bdGlobal": { en: "BD & Global Markets", bn: "বাংলাদেশ ও আন্তর্জাতিক বাজার" },
+  "hero.getInvestment": { en: "Get Investment for Your Startup Today", bn: "আপনার ব্যাবসার জন্য ইনভেস্টম্যান্ট সংগ্রহ করুন" },
 
   // Stats
   "stats.businessesFunded": { en: "Businesses Funded", bn: "অর্থায়িত ব্যবসা" },

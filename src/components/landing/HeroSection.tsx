@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, TrendingUp, Shield, Building2, Users } from "lucide-react";
+import { ArrowRight, TrendingUp, Shield, Building2, Users, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/contexts/LocaleContext";
 
@@ -33,6 +33,13 @@ const HeroSection = () => {
               {t("hero.subtitle")}
             </p>
 
+            <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-primary/[0.08] border border-primary/20 mb-8 sm:mb-10 shadow-sm">
+              <Rocket className="w-4 h-4 text-primary shrink-0" />
+              <span className="text-sm sm:text-base font-semibold text-primary">
+                {t("hero.getInvestment")}
+              </span>
+            </div>
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4 sm:px-0">
               <Button size="lg" className="glow-gold text-sm sm:text-base px-6 sm:px-8 h-12 shadow-lg shadow-primary/20 w-full sm:w-auto" asChild>
                 <Link to="/signup">
@@ -41,9 +48,9 @@ const HeroSection = () => {
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="text-sm sm:text-base px-6 sm:px-8 h-12 border-border hover:border-primary/50 shadow-sm w-full sm:w-auto" asChild>
-                <Link to="/explore">
+                <Link to="/onboarding/business">
                   <Building2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5" />
-                  Explore Businesses
+                  {t("hero.listBusiness")}
                 </Link>
               </Button>
             </div>
