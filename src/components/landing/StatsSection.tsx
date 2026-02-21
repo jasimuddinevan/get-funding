@@ -1,14 +1,17 @@
 import { motion } from "framer-motion";
 import { Building2, Users, DollarSign, BarChart3 } from "lucide-react";
-
-const stats = [
-  { icon: Building2, value: "120+", label: "Businesses Funded", delay: 0 },
-  { icon: DollarSign, value: "৳25Cr+", label: "Total Invested", delay: 0.1 },
-  { icon: Users, value: "3,200+", label: "Active Investors", delay: 0.2 },
-  { icon: BarChart3, value: "18%", label: "Avg. Returns", delay: 0.3 },
-];
+import { useLocale } from "@/contexts/LocaleContext";
 
 const StatsSection = () => {
+  const { t } = useLocale();
+
+  const stats = [
+    { icon: Building2, value: "120+", label: t("stats.businessesFunded"), delay: 0 },
+    { icon: DollarSign, value: "৳25Cr+", label: t("stats.totalInvested"), delay: 0.1 },
+    { icon: Users, value: "3,200+", label: t("stats.activeInvestors"), delay: 0.2 },
+    { icon: BarChart3, value: "18%", label: t("stats.avgReturns"), delay: 0.3 },
+  ];
+
   return (
     <section className="py-20 relative">
       <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/30 to-background" />
