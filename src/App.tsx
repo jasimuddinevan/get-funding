@@ -18,6 +18,11 @@ import PortfolioOverview from "./pages/investor/PortfolioOverview";
 import InvestmentHistory from "./pages/investor/InvestmentHistory";
 import Watchlist from "./pages/investor/Watchlist";
 import Notifications from "./pages/investor/Notifications";
+import AdminPanel from "./pages/admin/AdminPanel";
+import AdminDashboardOverview from "./pages/admin/AdminDashboardOverview";
+import BusinessReviews from "./pages/admin/BusinessReviews";
+import UserManagement from "./pages/admin/UserManagement";
+import InvestmentMonitoring from "./pages/admin/InvestmentMonitoring";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +46,12 @@ const AppShell = () => {
               <Route path="investments" element={<InvestmentHistory />} />
               <Route path="watchlist" element={<Watchlist />} />
               <Route path="notifications" element={<Notifications />} />
+            </Route>
+            <Route path="/admin" element={<AdminPanel />}>
+              <Route index element={<AdminDashboardOverview />} />
+              <Route path="reviews" element={<BusinessReviews />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="investments" element={<InvestmentMonitoring />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
