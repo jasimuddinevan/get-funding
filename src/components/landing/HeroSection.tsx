@@ -25,7 +25,8 @@ const HeroSection = () => {
             </div>
 
             <h1 className="font-display text-3xl sm:text-5xl lg:text-7xl font-bold leading-tight mb-4 sm:mb-6 px-2">
-              <span className="text-gradient-gold">{t("hero.getInvestment")}</span>
+              {t("hero.getInvestment1")}{" "}
+              <span className="text-gradient-gold">{t("hero.getInvestment2")}</span>
             </h1>
 
             <p className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2">
