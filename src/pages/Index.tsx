@@ -15,7 +15,6 @@ const Index = () => {
         <FeaturedSection />
         <TestimonialsSection />
       </main>
-      <div className="h-16" /> {/* Spacer for footer CTA overlap */}
       <Footer />
     </div>
   );
