@@ -1,73 +1,103 @@
-# Welcome to your Lovable project
+<div align="center">
 
-## Project info
+# 🌉 FundBridge
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+### Democratizing Investment — Connecting Businesses with Investors
 
-## How can I edit this code?
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript)](https://typescriptlang.org)
+[![Vite](https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite)](https://vitejs.dev)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
+[![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=flat-square)]()
 
-There are several ways of editing your application.
+</div>
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## 🚀 Vision
 
-Changes made via Lovable will be committed automatically to this repo.
+**FundBridge** is a revenue-sharing investment platform that bridges the gap between ambitious businesses seeking funding and investors looking for transparent, verified opportunities. We believe everyone deserves access to smart investment — not just the privileged few.
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## ✨ Key Features
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- 🔒 **Admin-Verified Business Listings** — Every business goes through a rigorous review process before being listed
+- 💰 **Revenue-Sharing Investment Model** — Invest and earn returns based on real business performance
+- 📊 **Investor Dashboard** — Track your portfolio, monitor returns, and manage investments in one place
+- 🎠 **Auto-Sliding Testimonials** — Smooth, animated carousel showcasing real investor experiences
+- 🌗 **Dark / Light Theme** — Full theme support with seamless toggling
+- 🌐 **Bilingual Support** — Available in English and বাংলা (Bangla)
+- 📱 **Fully Responsive** — Optimized for desktop, tablet, and mobile
+- 🔔 **Real-Time Notifications & Watchlist** — Stay updated on businesses you're interested in
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🛠️ Tech Stack
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+| Technology | Purpose |
+|---|---|
+| **React 18** | UI framework |
+| **TypeScript** | Type safety |
+| **Vite** | Build tool & dev server |
+| **Tailwind CSS** | Utility-first styling |
+| **Shadcn UI** | Component library |
+| **Framer Motion** | Animations & transitions |
+| **Recharts** | Data visualization |
+| **Lovable Cloud** | Backend, auth & database |
+| **React Router** | Client-side routing |
+| **React Query** | Server state management |
 
-# Step 3: Install the necessary dependencies.
-npm i
+---
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+## 🏁 Getting Started
+
+```bash
+# Clone the repository
+git clone https://github.com/jasimuddinevan/fundbridge.git
+
+# Navigate to the project
+cd fundbridge
+
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 🌐 Live Demo
 
-**Use GitHub Codespaces**
+👉 **[get-funding.lovable.app](https://get-funding.lovable.app)**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+---
 
-## What technologies are used for this project?
+## 👤 Author & Credits
 
-This project is built with:
+<div align="center">
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### **Jasim Uddin**
+*Founder & Developer*
 
-## How can I deploy this project?
+[![GitHub](https://img.shields.io/badge/GitHub-jasimuddinevan-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/jasimuddinevan)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Jasim_Uddin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/jasimuddinevan/)
+[![Twitter](https://img.shields.io/badge/Twitter-@jasimevan-1DA1F2?style=for-the-badge&logo=x&logoColor=white)](https://x.com/jasimevan)
+[![Email](https://img.shields.io/badge/Email-business.jasim@gmail.com-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:business.jasim@gmail.com)
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+</div>
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
+## 📄 License
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+
+<div align="center">
+
+*Built with ❤️ using [Lovable](https://lovable.dev)*
+
+</div>
