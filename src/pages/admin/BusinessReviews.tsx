@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import {
   FileSearch, CheckCircle2, XCircle, Eye, Clock, MapPin, TrendingUp,
   Building2, Globe, Calendar, DollarSign, Loader2, Star, Pencil,
-  Trash2, Ban, RotateCcw, MoreHorizontal,
+  Trash2, Ban, RotateCcw, MoreHorizontal, User, History, Mail, Phone,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
