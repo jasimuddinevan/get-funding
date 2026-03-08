@@ -49,14 +49,18 @@ const Footer = () => {
             <p className="text-sm text-muted-foreground leading-relaxed mb-6 max-w-[240px]">
               {t("footer.tagline")}
             </p>
-            <div className="flex items-center gap-4">
-              {/* Minimal social icons as text */}
-              {["X", "Li", "Gh"].map((icon) => (
+            <div className="flex items-center gap-3">
+              {[
+                { icon: Twitter, label: "Twitter" },
+                { icon: Linkedin, label: "LinkedIn" },
+                { icon: Github, label: "GitHub" },
+              ].map(({ icon: Icon, label }) => (
                 <span
-                  key={icon}
-                  className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors cursor-pointer"
+                  key={label}
+                  className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors cursor-pointer"
+                  aria-label={label}
                 >
-                  {icon}
+                  <Icon className="w-3.5 h-3.5" />
                 </span>
               ))}
             </div>
