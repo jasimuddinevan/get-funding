@@ -5,7 +5,7 @@ import {
   ArrowLeft, MapPin, TrendingUp, ShieldCheck, Calendar, Globe, Users,
   DollarSign, BarChart3, FileText, Building2, Target, Percent, Clock,
   ArrowRight, Heart, Share2, MessageSquare, Loader2, CheckCircle2,
-  Briefcase, Zap, Linkedin, Upload, Image as ImageIcon, CreditCard,
+  Briefcase, Zap, Linkedin, Upload, Image as ImageIcon, CreditCard, Landmark,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
