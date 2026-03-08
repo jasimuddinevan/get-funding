@@ -94,6 +94,19 @@ const PaymentApprovals = () => {
       })
       .eq("id", selected.id);
 
+    // On approval, update the business funded_amount
+    if (!error && action === "active") {
+      const { data: biz } = await supabase
+        .from("businesses")
+        .select("funded_amount")
+        .eq("id", selected.business_id)
+        .single();
+      await supabase
+        .from("businesses")
+        .update({ funded_amount: (biz?.funded_amount ?? 0) + selected.amount })
+        .eq("id", selected.business_id);
+    }
+
     if (!error) {
       // Notify investor
       await supabase.from("notifications").insert({
