@@ -190,18 +190,13 @@ export const LocaleProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Auto-detect region by IP geolocation
-    fetch("https://ipapi.co/json/")
+    fetch("https://ip-api.io/json", { signal: AbortSignal.timeout(3000) })
       .then((res) => res.json())
       .then((data) => {
-        if (data?.country_code === "BD") {
-          setRegion("bd");
-        } else {
-          setRegion("global");
-        }
+        setRegion(data?.country_code === "BD" ? "bd" : "global");
         setDetected(true);
       })
       .catch(() => {
-        // Default to global on error
         setRegion("global");
         setDetected(true);
       });
