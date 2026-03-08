@@ -81,6 +81,18 @@ const BusinessDetail = () => {
       setTeam(teamRes.data ?? []);
       setTiers(tiersRes.data ?? []);
       setInvestorCount(investRes.count ?? 0);
+
+      // Check if current user is a verified investor
+      if (user) {
+        const { count } = await supabase
+          .from("investments")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", id)
+          .eq("investor_id", user.id)
+          .eq("status", "active");
+        setIsVerifiedInvestor((count ?? 0) > 0);
+      }
+
       setLoading(false);
     };
     fetchData();
