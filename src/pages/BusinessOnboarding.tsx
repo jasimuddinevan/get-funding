@@ -148,7 +148,7 @@ const BusinessOnboarding = () => {
     }
 
     setSubmitting(true);
-    const { error } = await supabase.from("businesses").insert({
+    const payload = {
       owner_id: user.id,
       name: form.name.trim(),
       industry: form.industry,
@@ -170,17 +170,38 @@ const BusinessOnboarding = () => {
       max_investment: form.max_investment ? parseFloat(form.max_investment) : null,
       revenue_share_pct: parseFloat(form.revenue_share_pct) || null,
       payout_frequency: form.payout_frequency || null,
-      status: "pending",
-    });
+      status: "pending" as const,
+      admin_feedback: null,
+    };
+
+    let error;
+    if (editId) {
+      ({ error } = await supabase.from("businesses").update(payload).eq("id", editId).eq("owner_id", user.id));
+    } else {
+      ({ error } = await supabase.from("businesses").insert(payload));
+    }
     setSubmitting(false);
 
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Business submitted for review!");
+      toast.success(editId ? "Business updated and resubmitted for review!" : "Business submitted for review!");
       navigate("/business-dashboard");
     }
   };
+
+  if (loadingEdit) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="py-8">
+          <div className="container mx-auto px-4 max-w-3xl flex justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const inputClass = "mt-1.5 bg-secondary/50 border-border";
 
