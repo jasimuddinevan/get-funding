@@ -406,6 +406,70 @@ const ActiveBusinesses = () => {
           ))}
         </div>
       )}
+        </TabsContent>
+
+        <TabsContent value="suspended" className="space-y-4 mt-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : suspendedBusinesses.length === 0 ? (
+            <Card className="border-border/40">
+              <CardContent className="py-12 text-center">
+                <ShieldAlert className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground text-sm">No suspended businesses.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {suspendedBusinesses.map((biz, i) => (
+                <motion.div
+                  key={biz.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: i * 0.03 }}
+                >
+                  <Card className="border-orange-500/20 hover:border-orange-500/40 transition-all hover:shadow-md">
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-display font-semibold text-foreground truncate">{biz.name}</h3>
+                            <Badge variant="outline" className="text-[10px] border-orange-500/30 text-orange-600">Suspended</Badge>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {biz.industry && <Badge variant="secondary" className="text-[10px]">{biz.industry}</Badge>}
+                            {biz.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" /> {biz.location}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <a href={`/business/${biz.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-md hover:bg-secondary/50 text-muted-foreground hover:text-primary transition-colors shrink-0">
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </div>
+                      {biz.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{biz.description}</p>
+                      )}
+                      <div className="mt-3 pt-3 border-t border-border/30">
+                        <Button
+                          size="sm"
+                          className="w-full gap-1.5 text-xs"
+                          onClick={() => setReinstateTarget(biz)}
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" /> Reinstate to Active
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Disapproval Dialog */}
       <Dialog open={!!disapproveTarget} onOpenChange={(open) => !open && setDisapproveTarget(null)}>
@@ -450,6 +514,35 @@ const ActiveBusinesses = () => {
                 <><Ban className="w-4 h-4" /> Suspend Business</>
               ) : (
                 <><XCircle className="w-4 h-4" /> Revoke Approval</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reinstate Dialog */}
+      <Dialog open={!!reinstateTarget} onOpenChange={(open) => !open && setReinstateTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RotateCcw className="w-5 h-5 text-primary" />
+              Reinstate Business
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <p className="text-sm text-muted-foreground">
+              This will reinstate <span className="font-medium text-foreground">"{reinstateTarget?.name}"</span> back to approved status. It will be visible on the platform again and the owner will be notified.
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setReinstateTarget(null)} disabled={reinstateLoading}>
+              Cancel
+            </Button>
+            <Button onClick={handleReinstate} disabled={reinstateLoading} className="gap-2">
+              {reinstateLoading ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+              ) : (
+                <><RotateCcw className="w-4 h-4" /> Reinstate</>
               )}
             </Button>
           </DialogFooter>
