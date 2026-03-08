@@ -434,7 +434,7 @@ const BusinessReviews = () => {
                             </DropdownMenuItem>
                           )}
                           {biz.status !== "rejected" && (
-                            <DropdownMenuItem onClick={() => { setSelected(biz); setFeedback(""); }} className="gap-2 text-red-600">
+                            <DropdownMenuItem onClick={() => openReview(biz)} className="gap-2 text-red-600">
                               <XCircle className="w-3.5 h-3.5" /> Reject
                             </DropdownMenuItem>
                           )}
