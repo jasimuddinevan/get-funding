@@ -316,33 +316,33 @@ const ActiveBusinesses = () => {
                       </div>
 
                       {/* Name */}
-                      <h3 className="font-display text-base font-semibold text-foreground leading-snug mb-0.5 truncate">{biz.name}</h3>
+                      <h3 className="font-display text-lg font-semibold text-foreground leading-snug mb-0.5 truncate">{biz.name}</h3>
 
                       {/* Location */}
                       {biz.location && (
-                        <p className="flex items-center gap-1 text-[13px] text-muted-foreground mb-2.5">
-                          <MapPin className="w-3 h-3 shrink-0" /> {biz.location}
+                        <p className="flex items-center gap-1 text-sm text-muted-foreground mb-2.5">
+                          <MapPin className="w-3.5 h-3.5 shrink-0" /> {biz.location}
                         </p>
                       )}
 
                       {/* Description */}
                       {biz.description && (
-                        <p className="text-[13px] text-muted-foreground leading-relaxed line-clamp-2 mb-3">{biz.description}</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3">{biz.description}</p>
                       )}
 
                       {/* Revenue share */}
                       {biz.revenue_share_pct != null && (
                         <div className="flex items-center gap-1.5 mb-3">
-                          <TrendingUp className="w-3.5 h-3.5 text-primary" />
-                          <span className="font-mono text-[13px] font-semibold text-primary">{biz.revenue_share_pct}%</span>
-                          <span className="text-[13px] text-muted-foreground">revenue share</span>
+                          <TrendingUp className="w-4 h-4 text-primary" />
+                          <span className="font-mono text-sm font-semibold text-primary">{biz.revenue_share_pct}%</span>
+                          <span className="text-sm text-muted-foreground">revenue share</span>
                         </div>
                       )}
 
                       {/* Funded progress */}
                       {biz.funded_amount != null && biz.funding_goal ? (
                         <div className="mb-3">
-                          <div className="flex items-center justify-between text-[13px] mb-1">
+                          <div className="flex items-center justify-between text-sm mb-1">
                             <span className="text-muted-foreground">Funded</span>
                             <span className="font-mono font-medium text-foreground">{Math.round((biz.funded_amount / biz.funding_goal) * 100)}%</span>
                           </div>
