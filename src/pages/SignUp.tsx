@@ -30,8 +30,8 @@ const SignUp = () => {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Check your email to verify your account!");
-      navigate(role === "business_owner" ? "/onboarding/business" : "/login");
+      toast.success("Account created successfully!");
+      navigate(role === "business_owner" ? "/onboarding/business" : "/investor");
     }
   };
 
