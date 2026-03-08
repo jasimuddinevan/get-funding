@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 
 type Locale = "en" | "bn";
 
@@ -184,8 +184,28 @@ const translations: Record<string, Record<Locale, string>> = {
 const LocaleContext = createContext<LocaleContextType | undefined>(undefined);
 
 export const LocaleProvider = ({ children }: { children: ReactNode }) => {
-  const [region, setRegion] = useState<"bd" | "global">("bd");
+  const [region, setRegion] = useState<"bd" | "global">("global");
+  const [detected, setDetected] = useState(false);
   const locale: Locale = region === "bd" ? "bn" : "en";
+
+  useEffect(() => {
+    // Auto-detect region by IP geolocation
+    fetch("https://ipapi.co/json/")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.country_code === "BD") {
+          setRegion("bd");
+        } else {
+          setRegion("global");
+        }
+        setDetected(true);
+      })
+      .catch(() => {
+        // Default to global on error
+        setRegion("global");
+        setDetected(true);
+      });
+  }, []);
 
   const t = (key: string): string => {
     return translations[key]?.[locale] ?? translations[key]?.en ?? key;
