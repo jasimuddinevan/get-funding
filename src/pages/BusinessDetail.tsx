@@ -75,7 +75,7 @@ const BusinessDetail = () => {
         supabase.from("businesses").select("*").eq("id", id).maybeSingle(),
         supabase.from("business_team_members").select("*").eq("business_id", id),
         supabase.from("investment_tiers").select("*").eq("business_id", id).order("min_amount", { ascending: true }),
-        supabase.from("investments").select("id", { count: "exact" }).eq("business_id", id),
+        supabase.from("investments").select("id", { count: "exact" }).eq("business_id", id).eq("status", "active"),
       ]);
       setBusiness(bizRes.data);
       setTeam(teamRes.data ?? []);
