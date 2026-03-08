@@ -620,19 +620,33 @@ const BusinessDetail = () => {
                   ))}
                 </div>
 
-                <div>
-                  <Label className="mb-1.5 block text-sm">Payment Method</Label>
-                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <SelectTrigger className="bg-secondary/50 border-border">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border z-50">
-                      {PAYMENT_METHODS.map((m) => (
-                        <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                {bankAccounts.length > 0 && (
+                  <div>
+                    <Label className="mb-1.5 block text-sm">Select Bank Account</Label>
+                    <div className="space-y-2">
+                      {bankAccounts.map((bank) => (
+                        <button
+                          key={bank.id}
+                          type="button"
+                          onClick={() => setSelectedBankId(bank.id)}
+                          className={`w-full p-3 rounded-xl border text-left transition-all ${
+                            selectedBankId === bank.id
+                              ? "border-primary bg-primary/10"
+                              : "border-border bg-secondary/30 hover:border-primary/40"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Landmark className="w-5 h-5 text-primary shrink-0" />
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-foreground">{bank.bank_name}</div>
+                              <div className="text-xs text-muted-foreground">{bank.account_name} — {bank.account_number}</div>
+                            </div>
+                          </div>
+                        </button>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    </div>
+                  </div>
+                )}
 
                 {canConfirm && (
                   <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-2">
