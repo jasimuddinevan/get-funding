@@ -5,7 +5,7 @@ import {
   ArrowLeft, MapPin, TrendingUp, ShieldCheck, Calendar, Globe, Users,
   DollarSign, BarChart3, FileText, Building2, Target, Percent, Clock,
   ArrowRight, Heart, Share2, MessageSquare, Loader2, CheckCircle2,
-  Briefcase, Zap, Linkedin, Upload, Image as ImageIcon, CreditCard,
+  Briefcase, Zap, Linkedin, Upload, Image as ImageIcon, CreditCard, Landmark,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,13 +36,15 @@ const formatCurrency = (val: number) => {
 
 const formatCurrencyFull = (val: number) => `৳${val.toLocaleString()}`;
 
-const PAYMENT_METHODS = [
-  { value: "bkash", label: "bKash" },
-  { value: "nagad", label: "Nagad" },
-  { value: "rocket", label: "Rocket" },
-  { value: "bank_transfer", label: "Bank Transfer" },
-  { value: "upay", label: "Upay" },
-];
+interface BankAccount {
+  id: string;
+  bank_name: string;
+  account_name: string;
+  account_number: string;
+  branch_name: string | null;
+  routing_number: string | null;
+  instructions: string | null;
+}
 
 const BusinessDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -61,7 +63,9 @@ const BusinessDetail = () => {
   const [amount, setAmount] = useState("");
   const [step, setStep] = useState<"select" | "confirm" | "upload" | "success">("select");
   const [submitting, setSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("bkash");
+  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofPreview, setProofPreview] = useState<string | null>(null);
   const [investmentId, setInvestmentId] = useState<string | null>(null);
@@ -71,16 +75,20 @@ const BusinessDetail = () => {
     if (!id) return;
     const fetchData = async () => {
       setLoading(true);
-      const [bizRes, teamRes, tiersRes, investRes] = await Promise.all([
+      const [bizRes, teamRes, tiersRes, investRes, bankRes] = await Promise.all([
         supabase.from("businesses").select("*").eq("id", id).maybeSingle(),
         supabase.from("business_team_members").select("*").eq("business_id", id),
         supabase.from("investment_tiers").select("*").eq("business_id", id).order("min_amount", { ascending: true }),
         supabase.from("investments").select("id", { count: "exact" }).eq("business_id", id).eq("status", "active"),
+        supabase.from("payment_methods").select("id, bank_name, account_name, account_number, branch_name, routing_number, instructions").eq("is_active", true),
       ]);
       setBusiness(bizRes.data);
       setTeam(teamRes.data ?? []);
       setTiers(tiersRes.data ?? []);
       setInvestorCount(investRes.count ?? 0);
+      const banks = (bankRes.data ?? []) as BankAccount[];
+      setBankAccounts(banks);
+      if (banks.length > 0) setSelectedBankId(banks[0].id);
 
       // Check if current user is a verified investor
       if (user) {
@@ -163,7 +171,7 @@ const BusinessDetail = () => {
       revenue_share_pct: revenueShareForAmount,
       tier_id: selectedTier?.id ?? null,
       status: "pending_payment",
-      payment_method: paymentMethod,
+      payment_method: bankAccounts.find(b => b.id === selectedBankId)?.bank_name ?? "bank_transfer",
     }).select("id").single();
 
     if (error) {
@@ -515,7 +523,7 @@ const BusinessDetail = () => {
                     { q: "How are revenue shares calculated?", a: "Revenue shares are calculated on gross revenue before expenses. Payouts are automated through FundBridge based on verified financial reports." },
                     { q: "What happens if the business underperforms?", a: "Revenue sharing is proportional — if revenue drops, payouts adjust accordingly. Your investment is tied to real performance, not fixed promises." },
                     { q: "Can I exit my investment early?", a: "After a 12-month lock-in period, you can list your share on FundBridge's secondary marketplace (coming soon)." },
-                    { q: "How does payment verification work?", a: "After selecting an amount, you complete payment via bKash, Nagad, or bank transfer, then upload a screenshot/receipt. Our admin team verifies and activates your investment within 24 hours." },
+                    { q: "How does payment verification work?", a: "After selecting an amount, you transfer the funds to the designated bank account, then upload a screenshot or receipt as proof. Our admin team verifies and activates your investment within 24 hours." },
                   ].map((item) => (
                     <div key={item.q} className="border-b border-border/40 pb-4 last:border-0 last:pb-0">
                       <h4 className="font-semibold text-foreground text-sm mb-1.5">{item.q}</h4>
@@ -612,19 +620,33 @@ const BusinessDetail = () => {
                   ))}
                 </div>
 
-                <div>
-                  <Label className="mb-1.5 block text-sm">Payment Method</Label>
-                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <SelectTrigger className="bg-secondary/50 border-border">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border z-50">
-                      {PAYMENT_METHODS.map((m) => (
-                        <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                {bankAccounts.length > 0 && (
+                  <div>
+                    <Label className="mb-1.5 block text-sm">Select Bank Account</Label>
+                    <div className="space-y-2">
+                      {bankAccounts.map((bank) => (
+                        <button
+                          key={bank.id}
+                          type="button"
+                          onClick={() => setSelectedBankId(bank.id)}
+                          className={`w-full p-3 rounded-xl border text-left transition-all ${
+                            selectedBankId === bank.id
+                              ? "border-primary bg-primary/10"
+                              : "border-border bg-secondary/30 hover:border-primary/40"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Landmark className="w-5 h-5 text-primary shrink-0" />
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-foreground">{bank.bank_name}</div>
+                              <div className="text-xs text-muted-foreground">{bank.account_name} — {bank.account_number}</div>
+                            </div>
+                          </div>
+                        </button>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    </div>
+                  </div>
+                )}
 
                 {canConfirm && (
                   <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-2">
@@ -643,8 +665,8 @@ const BusinessDetail = () => {
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Payment</span>
-                      <span className="font-medium text-foreground">{PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label}</span>
+                      <span className="text-muted-foreground">Payment To</span>
+                      <span className="font-medium text-foreground">{bankAccounts.find(b => b.id === selectedBankId)?.bank_name ?? "Bank Transfer"}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Est. Monthly Return</span>
@@ -689,7 +711,7 @@ const BusinessDetail = () => {
                     <span className="text-sm text-muted-foreground">Payment Method</span>
                     <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
                       <CreditCard className="w-3.5 h-3.5" />
-                      {PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label}
+                      Bank Transfer
                     </span>
                   </div>
                   {selectedTier && (
@@ -702,15 +724,58 @@ const BusinessDetail = () => {
                   )}
                 </div>
 
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-                  <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-amber-500" /> Payment Instructions
-                  </h4>
+                {/* Bank Account Details */}
+                {(() => {
+                  const selectedBank = bankAccounts.find(b => b.id === selectedBankId);
+                  return selectedBank ? (
+                    <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+                      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <Landmark className="w-4 h-4 text-primary" /> Send Payment To
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Bank</span>
+                          <span className="font-semibold text-foreground">{selectedBank.bank_name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Account Name</span>
+                          <span className="font-medium text-foreground">{selectedBank.account_name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Account Number</span>
+                          <span className="font-mono font-bold text-foreground">{selectedBank.account_number}</span>
+                        </div>
+                        {selectedBank.branch_name && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Branch</span>
+                            <span className="font-medium text-foreground">{selectedBank.branch_name}</span>
+                          </div>
+                        )}
+                        {selectedBank.routing_number && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Routing No.</span>
+                            <span className="font-mono text-foreground">{selectedBank.routing_number}</span>
+                          </div>
+                        )}
+                      </div>
+                      {selectedBank.instructions && (
+                        <p className="text-xs text-muted-foreground mt-3 italic border-t border-border/40 pt-2">
+                          ℹ️ {selectedBank.instructions}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-border bg-secondary/10 p-4 text-center">
+                      <p className="text-sm text-muted-foreground">No bank account details available. Please contact support.</p>
+                    </div>
+                  );
+                })()}
+
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Please send <strong className="text-foreground">{formatCurrencyFull(parsedAmount)}</strong> via{" "}
-                    <strong className="text-foreground">{PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label}</strong>.
-                    After completing the payment, you'll be asked to upload a screenshot or receipt as proof.
-                    Your investment will be activated once an admin verifies the payment.
+                    Please send <strong className="text-foreground">{formatCurrencyFull(parsedAmount)}</strong> to the bank account above.
+                    After completing the transfer, you'll upload a screenshot/receipt as proof.
+                    Your investment will be activated once verified by our team.
                   </p>
                 </div>
 

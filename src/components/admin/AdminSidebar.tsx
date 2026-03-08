@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, FileSearch, Users, BarChart3, LogOut, ChevronLeft, Shield, CreditCard,
+  LayoutDashboard, FileSearch, Users, BarChart3, LogOut, ChevronLeft, Shield, CreditCard, Landmark,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -53,6 +53,7 @@ export function AdminSidebar() {
     { title: "Dashboard", url: "/admin", icon: LayoutDashboard, badge: 0 },
     { title: "Business Reviews", url: "/admin/reviews", icon: FileSearch, badge: pendingCount },
     { title: "Payment Approvals", url: "/admin/payments", icon: CreditCard, badge: 0 },
+    { title: "Payment Settings", url: "/admin/payment-settings", icon: Landmark, badge: 0 },
     { title: "User Management", url: "/admin/users", icon: Users, badge: 0 },
     { title: "Investments", url: "/admin/investments", icon: BarChart3, badge: 0 },
   ];

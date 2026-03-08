@@ -25,6 +25,7 @@ import BusinessReviews from "./pages/admin/BusinessReviews";
 import UserManagement from "./pages/admin/UserManagement";
 import InvestmentMonitoring from "./pages/admin/InvestmentMonitoring";
 import PaymentApprovals from "./pages/admin/PaymentApprovals";
+import PaymentSettings from "./pages/admin/PaymentSettings";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const AppShell = () => {
               <Route path="users" element={<UserManagement />} />
               <Route path="investments" element={<InvestmentMonitoring />} />
               <Route path="payments" element={<PaymentApprovals />} />
+              <Route path="payment-settings" element={<PaymentSettings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
