@@ -711,7 +711,7 @@ const BusinessDetail = () => {
                     <span className="text-sm text-muted-foreground">Payment Method</span>
                     <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
                       <CreditCard className="w-3.5 h-3.5" />
-                      {PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label}
+                      Bank Transfer
                     </span>
                   </div>
                   {selectedTier && (
@@ -724,15 +724,58 @@ const BusinessDetail = () => {
                   )}
                 </div>
 
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-                  <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-amber-500" /> Payment Instructions
-                  </h4>
+                {/* Bank Account Details */}
+                {(() => {
+                  const selectedBank = bankAccounts.find(b => b.id === selectedBankId);
+                  return selectedBank ? (
+                    <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+                      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <Landmark className="w-4 h-4 text-primary" /> Send Payment To
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Bank</span>
+                          <span className="font-semibold text-foreground">{selectedBank.bank_name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Account Name</span>
+                          <span className="font-medium text-foreground">{selectedBank.account_name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Account Number</span>
+                          <span className="font-mono font-bold text-foreground">{selectedBank.account_number}</span>
+                        </div>
+                        {selectedBank.branch_name && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Branch</span>
+                            <span className="font-medium text-foreground">{selectedBank.branch_name}</span>
+                          </div>
+                        )}
+                        {selectedBank.routing_number && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Routing No.</span>
+                            <span className="font-mono text-foreground">{selectedBank.routing_number}</span>
+                          </div>
+                        )}
+                      </div>
+                      {selectedBank.instructions && (
+                        <p className="text-xs text-muted-foreground mt-3 italic border-t border-border/40 pt-2">
+                          ℹ️ {selectedBank.instructions}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-border bg-secondary/10 p-4 text-center">
+                      <p className="text-sm text-muted-foreground">No bank account details available. Please contact support.</p>
+                    </div>
+                  );
+                })()}
+
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Please send <strong className="text-foreground">{formatCurrencyFull(parsedAmount)}</strong> via{" "}
-                    <strong className="text-foreground">{PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label}</strong>.
-                    After completing the payment, you'll be asked to upload a screenshot or receipt as proof.
-                    Your investment will be activated once an admin verifies the payment.
+                    Please send <strong className="text-foreground">{formatCurrencyFull(parsedAmount)}</strong> to the bank account above.
+                    After completing the transfer, you'll upload a screenshot/receipt as proof.
+                    Your investment will be activated once verified by our team.
                   </p>
                 </div>
 
