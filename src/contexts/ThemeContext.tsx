@@ -12,16 +12,16 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== "undefined") {
-      return (localStorage.getItem("theme") as Theme) || "light";
+      return (localStorage.getItem("theme") as Theme) || "dark";
     }
-    return "light";
+    return "dark";
   });
 
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove("light", "dark");
-    if (theme === "dark") {
-      root.classList.add("dark");
+    if (theme === "light") {
+      root.classList.add("light");
     }
     localStorage.setItem("theme", theme);
   }, [theme]);
