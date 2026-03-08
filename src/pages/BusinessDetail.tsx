@@ -523,7 +523,7 @@ const BusinessDetail = () => {
                     { q: "How are revenue shares calculated?", a: "Revenue shares are calculated on gross revenue before expenses. Payouts are automated through FundBridge based on verified financial reports." },
                     { q: "What happens if the business underperforms?", a: "Revenue sharing is proportional — if revenue drops, payouts adjust accordingly. Your investment is tied to real performance, not fixed promises." },
                     { q: "Can I exit my investment early?", a: "After a 12-month lock-in period, you can list your share on FundBridge's secondary marketplace (coming soon)." },
-                    { q: "How does payment verification work?", a: "After selecting an amount, you complete payment via bKash, Nagad, or bank transfer, then upload a screenshot/receipt. Our admin team verifies and activates your investment within 24 hours." },
+                    { q: "How does payment verification work?", a: "After selecting an amount, you transfer the funds to the designated bank account, then upload a screenshot or receipt as proof. Our admin team verifies and activates your investment within 24 hours." },
                   ].map((item) => (
                     <div key={item.q} className="border-b border-border/40 pb-4 last:border-0 last:pb-0">
                       <h4 className="font-semibold text-foreground text-sm mb-1.5">{item.q}</h4>
