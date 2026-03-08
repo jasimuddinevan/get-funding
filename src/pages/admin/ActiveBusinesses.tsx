@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   Building2, Search, MapPin, TrendingUp, DollarSign, Loader2, Star, Globe,
-  ExternalLink, SlidersHorizontal, X, Ban, XCircle, AlertTriangle,
+  ExternalLink, SlidersHorizontal, X, Ban, XCircle, AlertTriangle, StarOff,
 } from "lucide-react";
 import { INDUSTRIES } from "@/data/businesses";
 
