@@ -246,6 +246,11 @@ const BusinessDetail = () => {
                         <ShieldCheck className="w-3.5 h-3.5" /> Verified
                       </Badge>
                     )}
+                    {isVerifiedInvestor && (
+                      <Badge className="gap-1 bg-emerald-500/15 text-emerald-600 border-emerald-500/30">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Verified Investor
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex items-center gap-3 mt-2 flex-wrap">
                     {business.industry && <Badge variant="secondary">{business.industry}</Badge>}
