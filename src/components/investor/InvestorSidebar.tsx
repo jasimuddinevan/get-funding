@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, History, Bookmark, Bell, LogOut, ChevronLeft,
+  LayoutDashboard, History, Bookmark, Bell, LogOut, ChevronLeft, Building2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
