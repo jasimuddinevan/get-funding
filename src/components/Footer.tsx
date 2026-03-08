@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Twitter, Linkedin, Github } from "lucide-react";
 import { useLocale } from "@/contexts/LocaleContext";
 
 const Footer = () => {
