@@ -116,6 +116,20 @@ const ActiveBusinesses = () => {
     setDisapproveLoading(false);
   };
 
+  const toggleFeatured = async (biz: Business) => {
+    const newVal = !biz.featured;
+    const { error } = await supabase
+      .from("businesses")
+      .update({ featured: newVal })
+      .eq("id", biz.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(`${biz.name} ${newVal ? "marked as featured" : "removed from featured"}`);
+      setBusinesses((prev) => prev.map((b) => (b.id === biz.id ? { ...b, featured: newVal } : b)));
+    }
+  };
+
   const filtered = useMemo(() => {
     return businesses.filter((b) => {
       if (search) {
