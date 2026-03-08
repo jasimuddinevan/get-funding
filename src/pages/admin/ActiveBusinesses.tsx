@@ -418,7 +418,7 @@ const ActiveBusinesses = () => {
                         <div className="w-9 h-9 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
                           <span className="text-sm font-semibold text-orange-500">{biz.name.charAt(0)}</span>
                         </div>
-                        <Badge variant="outline" className="text-[11px] font-medium px-2 py-0.5 border-orange-500/25 text-orange-500">Suspended</Badge>
+                        <Badge variant="outline" className="text-xs font-medium px-2.5 py-0.5 border-orange-500/25 text-orange-500">Suspended</Badge>
                       </div>
 
                       <h3 className="font-display text-lg font-semibold text-foreground leading-snug mb-0.5 truncate">{biz.name}</h3>
