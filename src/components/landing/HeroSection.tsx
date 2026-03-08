@@ -67,11 +67,6 @@ const HeroSection = () => {
           >
             <div className="inline-flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-2 sm:gap-y-3 px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-card/60 border border-border/60 backdrop-blur-sm">
               <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
-                <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
-                <span>{t("hero.adminVerified")}</span>
-              </div>
-              <div className="w-px h-3 sm:h-4 bg-border hidden sm:block" />
-              <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
                 <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
                 <span>{t("hero.revenueBased")}</span>
               </div>
