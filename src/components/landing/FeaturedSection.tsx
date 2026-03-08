@@ -30,7 +30,7 @@ const FeaturedSection = () => {
       // Try featured first
       const { data: featured } = await supabase
         .from("businesses")
-        .select("id, name, industry, location, revenue_share_pct, funding_goal, funded_amount, status")
+        .select("id, name, industry, location, revenue_share_pct, funding_goal, funded_amount, status, description")
         .eq("featured", true)
         .eq("status", "approved")
         .order("created_at", { ascending: false })
@@ -42,7 +42,7 @@ const FeaturedSection = () => {
         // Fallback: show latest approved businesses
         const { data: approved } = await supabase
           .from("businesses")
-          .select("id, name, industry, location, revenue_share_pct, funding_goal, funded_amount, status")
+          .select("id, name, industry, location, revenue_share_pct, funding_goal, funded_amount, status, description")
           .eq("status", "approved")
           .order("created_at", { ascending: false })
           .limit(16);
