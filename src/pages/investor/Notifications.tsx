@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Bell, Check, CheckCheck, Clock } from "lucide-react";
+import { Bell, Check, CheckCheck, Clock, Inbox } from "lucide-react";
 import { toast } from "sonner";
 
 interface Notification {
@@ -34,6 +33,21 @@ const Notifications = () => {
 
   useEffect(() => {
     fetchNotifications();
+
+    // Realtime updates
+    if (!user) return;
+    const channel = supabase
+      .channel("notif-page")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          setNotifications((prev) => [payload.new as Notification, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [user]);
 
   const markAsRead = async (id: string) => {
@@ -69,29 +83,38 @@ const Notifications = () => {
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 w-48 bg-muted animate-pulse rounded" />
-        {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-muted animate-pulse rounded-xl" />)}
+        <div className="h-10 w-48 bg-muted animate-pulse rounded-lg" />
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-16 bg-muted animate-pulse rounded-xl" />
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <motion.div
+      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-bold text-foreground">Notifications</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}` : "All caught up!"}
+            {unreadCount > 0
+              ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}`
+              : "All caught up!"}
           </p>
         </div>
         {unreadCount > 0 && (
-          <Button variant="outline" size="sm" onClick={markAllRead} className="gap-2">
+          <Button variant="outline" size="sm" onClick={markAllRead} className="gap-2 self-start sm:self-auto">
             <CheckCheck className="w-4 h-4" /> Mark all read
           </Button>
         )}
       </div>
 
-      <Card className="glass-card border-border/40">
+      <Card className="border-border/40">
         <CardHeader>
           <CardTitle className="font-display text-lg flex items-center gap-2">
             <Bell className="w-5 h-5 text-primary" /> All Notifications
@@ -100,9 +123,13 @@ const Notifications = () => {
         <CardContent>
           {notifications.length === 0 ? (
             <div className="text-center py-12">
-              <Bell className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground text-sm">No notifications yet.</p>
-              <p className="text-xs text-muted-foreground mt-1">You'll be notified about investment updates here.</p>
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Inbox className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-1">No notifications yet</h3>
+              <p className="text-sm text-muted-foreground">
+                You'll be notified about investment updates here.
+              </p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -118,7 +145,7 @@ const Notifications = () => {
                       : "border-primary/20 bg-primary/5"
                   }`}
                 >
-                  <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${notif.read ? "bg-muted" : "bg-primary"}`} />
+                  <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${notif.read ? "bg-muted-foreground/30" : "bg-primary"}`} />
                   <div className="flex-1 min-w-0">
                     <h4 className={`text-sm ${notif.read ? "text-foreground" : "text-foreground font-semibold"}`}>
                       {notif.title}
@@ -145,7 +172,7 @@ const Notifications = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 };
 
