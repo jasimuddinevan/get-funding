@@ -14,8 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
-  Building2, Search, MapPin, TrendingUp, DollarSign, Loader2, Star, Globe,
-  ExternalLink, SlidersHorizontal, X, Ban, XCircle, AlertTriangle, StarOff,
+  Building2, Search, MapPin, TrendingUp, Loader2, Star,
+  SlidersHorizontal, X, Ban, XCircle, AlertTriangle, StarOff,
   RotateCcw, ShieldAlert,
 } from "lucide-react";
 import { INDUSTRIES } from "@/data/businesses";
