@@ -54,6 +54,7 @@ const BusinessDetail = () => {
   const [tiers, setTiers] = useState<InvestmentTier[]>([]);
   const [loading, setLoading] = useState(true);
   const [investorCount, setInvestorCount] = useState(0);
+  const [isVerifiedInvestor, setIsVerifiedInvestor] = useState(false);
 
   const [investOpen, setInvestOpen] = useState(false);
   const [selectedTierIdx, setSelectedTierIdx] = useState<number | null>(null);
