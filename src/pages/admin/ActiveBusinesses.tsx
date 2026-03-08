@@ -43,11 +43,13 @@ const LOCATIONS = ["All Locations", "Bangladesh", "Global"] as const;
 const ActiveBusinesses = () => {
   const { user } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [suspendedBusinesses, setSuspendedBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [industry, setIndustry] = useState("All Industries");
   const [location, setLocation] = useState("All Locations");
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState("active");
 
   // Disapproval dialog state
   const [disapproveTarget, setDisapproveTarget] = useState<Business | null>(null);
@@ -55,13 +57,17 @@ const ActiveBusinesses = () => {
   const [disapproveFeedback, setDisapproveFeedback] = useState("");
   const [disapproveLoading, setDisapproveLoading] = useState(false);
 
+  // Reinstate state
+  const [reinstateTarget, setReinstateTarget] = useState<Business | null>(null);
+  const [reinstateLoading, setReinstateLoading] = useState(false);
+
   const fetchBusinesses = async () => {
-    const { data } = await supabase
-      .from("businesses")
-      .select("*")
-      .eq("status", "approved")
-      .order("created_at", { ascending: false });
-    setBusinesses((data as Business[]) ?? []);
+    const [{ data: approved }, { data: suspended }] = await Promise.all([
+      supabase.from("businesses").select("*").eq("status", "approved").order("created_at", { ascending: false }),
+      supabase.from("businesses").select("*").eq("status", "suspended").order("created_at", { ascending: false }),
+    ]);
+    setBusinesses((approved as Business[]) ?? []);
+    setSuspendedBusinesses((suspended as Business[]) ?? []);
     setLoading(false);
   };
 
