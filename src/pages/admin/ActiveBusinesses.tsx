@@ -404,39 +404,39 @@ const ActiveBusinesses = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {suspendedBusinesses.map((biz, i) => (
                 <motion.div
                   key={biz.id}
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: i * 0.03 }}
                 >
-                  <Card className="rounded-xl border-orange-500/20 hover:border-orange-500/40 transition-all hover:shadow-lg">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="w-10 h-10 rounded-full bg-orange-500/15 flex items-center justify-center">
+                  <Card className="rounded-lg border-orange-500/15 hover:border-orange-500/30 transition-all duration-200 hover:shadow-md">
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="w-9 h-9 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
                           <span className="text-sm font-semibold text-orange-500">{biz.name.charAt(0)}</span>
                         </div>
-                        <Badge variant="outline" className="text-xs font-normal px-2.5 py-0.5 rounded-full border-orange-500/30 text-orange-500">Suspended</Badge>
+                        <Badge variant="outline" className="text-[11px] font-medium px-2 py-0.5 border-orange-500/25 text-orange-500">Suspended</Badge>
                       </div>
 
-                      <h3 className="font-display text-lg font-semibold text-foreground leading-tight mb-1 truncate">{biz.name}</h3>
+                      <h3 className="font-display text-base font-semibold text-foreground leading-snug mb-0.5 truncate">{biz.name}</h3>
 
                       {biz.location && (
-                        <p className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
-                          <MapPin className="w-3.5 h-3.5" /> {biz.location}
+                        <p className="flex items-center gap-1 text-[13px] text-muted-foreground mb-2.5">
+                          <MapPin className="w-3 h-3 shrink-0" /> {biz.location}
                         </p>
                       )}
 
                       {biz.description && (
-                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-4">{biz.description}</p>
+                        <p className="text-[13px] text-muted-foreground leading-relaxed line-clamp-2 mb-3">{biz.description}</p>
                       )}
 
-                      <div className="pt-4 border-t border-border/40">
+                      <div className="pt-3 mt-1 border-t border-border/30">
                         <Button
                           size="sm"
-                          className="w-full gap-1.5 text-sm rounded-lg"
+                          className="w-full gap-1.5 text-[13px] h-8 rounded-md"
                           onClick={() => setReinstateTarget(biz)}
                         >
                           <RotateCcw className="w-3.5 h-3.5" /> Reinstate to Active
