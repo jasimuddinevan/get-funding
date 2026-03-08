@@ -64,11 +64,60 @@ const initialFormData: FormData = {
 };
 
 const BusinessOnboarding = () => {
+  const { id: editId } = useParams<{ id: string }>();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(initialFormData);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState(!!editId);
   const { user, userRole } = useAuth();
   const navigate = useNavigate();
+
+  // Load existing business data for editing
+  useEffect(() => {
+    if (!editId || !user) return;
+    const load = async () => {
+      const { data, error } = await supabase
+        .from("businesses")
+        .select("*")
+        .eq("id", editId)
+        .eq("owner_id", user.id)
+        .single();
+      if (error || !data) {
+        toast.error("Business not found or you don't have permission to edit it.");
+        navigate("/business-dashboard");
+        return;
+      }
+      if (data.status !== "draft" && data.status !== "rejected") {
+        toast.error("Only draft or rejected applications can be edited.");
+        navigate("/business-dashboard");
+        return;
+      }
+      setForm({
+        name: data.name || "",
+        industry: data.industry || "",
+        location: data.location || "",
+        region: data.region || "bd",
+        founded_year: data.founded_year?.toString() || "",
+        website: data.website || "",
+        description: data.description || "",
+        pitch: data.pitch || "",
+        problem_solved: data.problem_solved || "",
+        target_market: data.target_market || "",
+        competitive_advantage: data.competitive_advantage || "",
+        current_revenue: data.current_revenue?.toString() || "",
+        growth_rate: data.growth_rate?.toString() || "",
+        profit_margin: data.profit_margin?.toString() || "",
+        financial_projection: data.financial_projection || "",
+        funding_goal: data.funding_goal?.toString() || "",
+        min_investment: data.min_investment?.toString() || "",
+        max_investment: data.max_investment?.toString() || "",
+        revenue_share_pct: data.revenue_share_pct?.toString() || "",
+        payout_frequency: data.payout_frequency || "Monthly",
+      });
+      setLoadingEdit(false);
+    };
+    load();
+  }, [editId, user, navigate]);
 
   const set = (field: keyof FormData) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
