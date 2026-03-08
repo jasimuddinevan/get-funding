@@ -102,8 +102,8 @@ const FeaturedSection = () => {
                   transition={{ duration: 0.5, delay: i * 0.05 }}
                   viewport={{ once: true }}
                 >
-                  <Link to={`/business/${biz.id}`}>
-                    <Card className="bg-card border-border/50 rounded-2xl shadow-sm hover:shadow-lg hover:shadow-primary/[0.06] hover:border-primary/40 transition-all duration-300 cursor-pointer group h-full overflow-hidden">
+                  <Link to={`/business/${biz.id}`} className="block">
+                    <Card className="bg-card border-border/50 rounded-2xl shadow-sm hover:shadow-lg hover:shadow-primary/[0.06] hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer group h-full overflow-hidden">
                       <CardContent className="p-5 sm:p-6 flex flex-col h-full">
                         {/* Header: Avatar + Verified */}
                         <div className="flex items-start justify-between mb-4">
