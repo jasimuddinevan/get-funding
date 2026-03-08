@@ -123,8 +123,41 @@ const ActiveBusinesses = () => {
     }
     setDisapproveLoading(false);
   };
+  const handleReinstate = async () => {
+    if (!reinstateTarget || !user) return;
+    setReinstateLoading(true);
+    const { error } = await supabase
+      .from("businesses")
+      .update({
+        status: "approved" as any,
+        admin_feedback: null,
+        reviewed_by: user.id,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", reinstateTarget.id);
 
-  const toggleFeatured = async (biz: Business) => {
+    if (error) {
+      toast.error(error.message);
+    } else {
+      await supabase.from("admin_reviews").insert({
+        business_id: reinstateTarget.id,
+        reviewer_id: user.id,
+        action: "reinstated",
+        comments: "Business reinstated to approved status.",
+      });
+      await supabase.from("notifications").insert({
+        user_id: reinstateTarget.owner_id,
+        title: "Business Reinstated! 🎉",
+        message: `Your business "${reinstateTarget.name}" has been reinstated and is now live on the platform again.`,
+      });
+      toast.success(`${reinstateTarget.name} has been reinstated.`);
+      setReinstateTarget(null);
+      fetchBusinesses();
+    }
+    setReinstateLoading(false);
+  };
+
+
     const newVal = !biz.featured;
     const { error } = await supabase
       .from("businesses")
