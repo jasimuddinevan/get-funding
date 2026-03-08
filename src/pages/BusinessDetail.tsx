@@ -665,8 +665,8 @@ const BusinessDetail = () => {
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Payment</span>
-                      <span className="font-medium text-foreground">{PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label}</span>
+                      <span className="text-muted-foreground">Payment To</span>
+                      <span className="font-medium text-foreground">{bankAccounts.find(b => b.id === selectedBankId)?.bank_name ?? "Bank Transfer"}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Est. Monthly Return</span>
