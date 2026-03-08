@@ -55,6 +55,7 @@ const AppShell = () => {
               <Route path="reviews" element={<BusinessReviews />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="investments" element={<InvestmentMonitoring />} />
+              <Route path="payments" element={<PaymentApprovals />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
