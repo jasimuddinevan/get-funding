@@ -25,6 +25,7 @@ import BusinessReviews from "./pages/admin/BusinessReviews";
 import UserManagement from "./pages/admin/UserManagement";
 import InvestmentMonitoring from "./pages/admin/InvestmentMonitoring";
 import PaymentApprovals from "./pages/admin/PaymentApprovals";
+import PaymentSettings from "./pages/admin/PaymentSettings";
 
 const queryClient = new QueryClient();
 
