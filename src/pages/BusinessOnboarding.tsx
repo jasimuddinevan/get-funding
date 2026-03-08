@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,11 +64,60 @@ const initialFormData: FormData = {
 };
 
 const BusinessOnboarding = () => {
+  const { id: editId } = useParams<{ id: string }>();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(initialFormData);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState(!!editId);
   const { user, userRole } = useAuth();
   const navigate = useNavigate();
+
+  // Load existing business data for editing
+  useEffect(() => {
+    if (!editId || !user) return;
+    const load = async () => {
+      const { data, error } = await supabase
+        .from("businesses")
+        .select("*")
+        .eq("id", editId)
+        .eq("owner_id", user.id)
+        .single();
+      if (error || !data) {
+        toast.error("Business not found or you don't have permission to edit it.");
+        navigate("/business-dashboard");
+        return;
+      }
+      if (data.status !== "draft" && data.status !== "rejected") {
+        toast.error("Only draft or rejected applications can be edited.");
+        navigate("/business-dashboard");
+        return;
+      }
+      setForm({
+        name: data.name || "",
+        industry: data.industry || "",
+        location: data.location || "",
+        region: data.region || "bd",
+        founded_year: data.founded_year?.toString() || "",
+        website: data.website || "",
+        description: data.description || "",
+        pitch: data.pitch || "",
+        problem_solved: data.problem_solved || "",
+        target_market: data.target_market || "",
+        competitive_advantage: data.competitive_advantage || "",
+        current_revenue: data.current_revenue?.toString() || "",
+        growth_rate: data.growth_rate?.toString() || "",
+        profit_margin: data.profit_margin?.toString() || "",
+        financial_projection: data.financial_projection || "",
+        funding_goal: data.funding_goal?.toString() || "",
+        min_investment: data.min_investment?.toString() || "",
+        max_investment: data.max_investment?.toString() || "",
+        revenue_share_pct: data.revenue_share_pct?.toString() || "",
+        payout_frequency: data.payout_frequency || "Monthly",
+      });
+      setLoadingEdit(false);
+    };
+    load();
+  }, [editId, user, navigate]);
 
   const set = (field: keyof FormData) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -99,7 +148,7 @@ const BusinessOnboarding = () => {
     }
 
     setSubmitting(true);
-    const { error } = await supabase.from("businesses").insert({
+    const payload = {
       owner_id: user.id,
       name: form.name.trim(),
       industry: form.industry,
@@ -121,17 +170,38 @@ const BusinessOnboarding = () => {
       max_investment: form.max_investment ? parseFloat(form.max_investment) : null,
       revenue_share_pct: parseFloat(form.revenue_share_pct) || null,
       payout_frequency: form.payout_frequency || null,
-      status: "pending",
-    });
+      status: "pending" as const,
+      admin_feedback: null,
+    };
+
+    let error;
+    if (editId) {
+      ({ error } = await supabase.from("businesses").update(payload).eq("id", editId).eq("owner_id", user.id));
+    } else {
+      ({ error } = await supabase.from("businesses").insert(payload));
+    }
     setSubmitting(false);
 
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Business submitted for review!");
+      toast.success(editId ? "Business updated and resubmitted for review!" : "Business submitted for review!");
       navigate("/business-dashboard");
     }
   };
+
+  if (loadingEdit) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="py-8">
+          <div className="container mx-auto px-4 max-w-3xl flex justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const inputClass = "mt-1.5 bg-secondary/50 border-border";
 
@@ -142,8 +212,8 @@ const BusinessOnboarding = () => {
         <div className="container mx-auto px-4 max-w-3xl">
           {/* Header */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
-            <h1 className="font-display text-4xl font-bold text-foreground mb-2">List Your Business</h1>
-            <p className="text-muted-foreground">Complete the form below to submit your business for admin review.</p>
+            <h1 className="font-display text-4xl font-bold text-foreground mb-2">{editId ? "Edit Your Business" : "List Your Business"}</h1>
+            <p className="text-muted-foreground">{editId ? "Update your application and resubmit for review." : "Complete the form below to submit your business for admin review."}</p>
           </motion.div>
 
           {/* Step Indicator */}
@@ -413,9 +483,9 @@ const BusinessOnboarding = () => {
                   className="gap-2 glow-gold"
                 >
                   {submitting ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
+                    <><Loader2 className="w-4 h-4 animate-spin" /> {editId ? "Updating..." : "Submitting..."}</>
                   ) : (
-                    <><CheckCircle2 className="w-4 h-4" /> Submit for Review</>
+                    <><CheckCircle2 className="w-4 h-4" /> {editId ? "Update & Resubmit" : "Submit for Review"}</>
                   )}
                 </Button>
               )}
