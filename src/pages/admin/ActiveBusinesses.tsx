@@ -360,7 +360,7 @@ const ActiveBusinesses = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1 gap-1.5 text-[12px] h-8 rounded-md text-orange-500 border-orange-500/20 hover:bg-orange-500/10 hover:border-orange-500/30"
+                          className="flex-1 gap-1.5 text-xs h-9 rounded-md text-orange-500 border-orange-500/20 hover:bg-orange-500/10 hover:border-orange-500/30"
                           onClick={() => {
                             setDisapproveTarget(biz);
                             setDisapproveAction("suspended");
