@@ -171,7 +171,7 @@ const BusinessDetail = () => {
       revenue_share_pct: revenueShareForAmount,
       tier_id: selectedTier?.id ?? null,
       status: "pending_payment",
-      payment_method: paymentMethod,
+      payment_method: bankAccounts.find(b => b.id === selectedBankId)?.bank_name ?? "bank_transfer",
     }).select("id").single();
 
     if (error) {
