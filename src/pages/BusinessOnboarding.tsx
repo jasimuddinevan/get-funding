@@ -93,8 +93,8 @@ const BusinessOnboarding = () => {
       navigate("/login");
       return;
     }
-    if (userRole !== "business_owner") {
-      toast.error("Only business owners can submit businesses.");
+    if (userRole !== "business_owner" && userRole !== "investor") {
+      toast.error("Only business owners and investors can submit businesses.");
       return;
     }
 
