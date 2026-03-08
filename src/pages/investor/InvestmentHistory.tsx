@@ -22,8 +22,11 @@ interface Investment {
 const statusColor: Record<string, string> = {
   active: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
   pending: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
+  pending_payment: "bg-muted text-muted-foreground border-border",
+  pending_approval: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
   completed: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30",
   cancelled: "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30",
+  rejected: "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30",
 };
 
 const InvestmentHistory = () => {
