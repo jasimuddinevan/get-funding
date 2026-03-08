@@ -14,6 +14,7 @@ import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
 import About from "./pages/About";
 import BusinessOnboarding from "./pages/BusinessOnboarding";
+import BusinessOwnerDashboard from "./pages/business/BusinessOwnerDashboard";
 import InvestorDashboard from "./pages/investor/InvestorDashboard";
 import PortfolioOverview from "./pages/investor/PortfolioOverview";
 import InvestmentHistory from "./pages/investor/InvestmentHistory";
