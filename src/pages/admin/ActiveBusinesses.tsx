@@ -196,13 +196,20 @@ const ActiveBusinesses = () => {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold text-foreground">Businesses</h1>
-        <p className="text-muted-foreground text-sm mt-1">All active and published businesses on the platform.</p>
+        <p className="text-muted-foreground text-sm mt-1">Manage all businesses on the platform.</p>
       </div>
 
-      {/* Search & Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="active" className="gap-2">
+            Active <Badge variant="secondary" className="text-[10px] ml-1">{businesses.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="suspended" className="gap-2">
+            <ShieldAlert className="w-3.5 h-3.5" /> Suspended <Badge variant="secondary" className="text-[10px] ml-1">{suspendedBusinesses.length}</Badge>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="active" className="space-y-4 mt-4">
           <Input
             placeholder="Search businesses..."
             value={search}
