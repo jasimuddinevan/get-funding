@@ -110,6 +110,38 @@ const BusinessReviews = () => {
     setLoading(false);
   };
 
+  const fetchDetails = async (biz: Business) => {
+    setDetailLoading(true);
+    const [profileRes, reviewsRes, teamRes, docsRes, investRes] = await Promise.all([
+      supabase.from("profiles").select("full_name, phone, avatar_url, user_id").eq("user_id", biz.owner_id).maybeSingle(),
+      supabase.from("admin_reviews").select("*").eq("business_id", biz.id).order("created_at", { ascending: false }),
+      supabase.from("business_team_members").select("id, name, role").eq("business_id", biz.id),
+      supabase.from("business_documents").select("id, document_type, file_name, file_url").eq("business_id", biz.id),
+      supabase.from("investments").select("id", { count: "exact", head: true }).eq("business_id", biz.id).eq("status", "active"),
+    ]);
+    setOwnerProfile(profileRes.data);
+    setInvestmentCount(investRes.count ?? 0);
+    setTeamMembers((teamRes.data ?? []) as typeof teamMembers);
+    setDocuments((docsRes.data ?? []) as typeof documents);
+
+    // Enrich reviews with reviewer names
+    const reviews = (reviewsRes.data ?? []) as Array<{ id: string; action: string; comments: string | null; created_at: string; reviewer_id: string }>;
+    const reviewerIds = [...new Set(reviews.map(r => r.reviewer_id))];
+    let reviewerMap = new Map<string, string | null>();
+    if (reviewerIds.length > 0) {
+      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name").in("user_id", reviewerIds);
+      reviewerMap = new Map((profiles ?? []).map(p => [p.user_id, p.full_name]));
+    }
+    setReviewHistory(reviews.map(r => ({ ...r, reviewer_name: reviewerMap.get(r.reviewer_id) ?? null })));
+    setDetailLoading(false);
+  };
+
+  const openReview = (biz: Business) => {
+    setSelected(biz);
+    setFeedback("");
+    fetchDetails(biz);
+  };
+
   useEffect(() => {
     setLoading(true);
     fetchBusinesses();
