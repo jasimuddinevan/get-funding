@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -15,6 +16,7 @@ import { toast } from "sonner";
 import {
   Building2, Search, MapPin, TrendingUp, DollarSign, Loader2, Star, Globe,
   ExternalLink, SlidersHorizontal, X, Ban, XCircle, AlertTriangle, StarOff,
+  RotateCcw, ShieldAlert,
 } from "lucide-react";
 import { INDUSTRIES } from "@/data/businesses";
 
@@ -41,11 +43,13 @@ const LOCATIONS = ["All Locations", "Bangladesh", "Global"] as const;
 const ActiveBusinesses = () => {
   const { user } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [suspendedBusinesses, setSuspendedBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [industry, setIndustry] = useState("All Industries");
   const [location, setLocation] = useState("All Locations");
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState("active");
 
   // Disapproval dialog state
   const [disapproveTarget, setDisapproveTarget] = useState<Business | null>(null);
@@ -53,13 +57,17 @@ const ActiveBusinesses = () => {
   const [disapproveFeedback, setDisapproveFeedback] = useState("");
   const [disapproveLoading, setDisapproveLoading] = useState(false);
 
+  // Reinstate state
+  const [reinstateTarget, setReinstateTarget] = useState<Business | null>(null);
+  const [reinstateLoading, setReinstateLoading] = useState(false);
+
   const fetchBusinesses = async () => {
-    const { data } = await supabase
-      .from("businesses")
-      .select("*")
-      .eq("status", "approved")
-      .order("created_at", { ascending: false });
-    setBusinesses((data as Business[]) ?? []);
+    const [{ data: approved }, { data: suspended }] = await Promise.all([
+      supabase.from("businesses").select("*").eq("status", "approved").order("created_at", { ascending: false }),
+      supabase.from("businesses").select("*").eq("status", "suspended").order("created_at", { ascending: false }),
+    ]);
+    setBusinesses((approved as Business[]) ?? []);
+    setSuspendedBusinesses((suspended as Business[]) ?? []);
     setLoading(false);
   };
 
@@ -115,6 +123,39 @@ const ActiveBusinesses = () => {
     }
     setDisapproveLoading(false);
   };
+  const handleReinstate = async () => {
+    if (!reinstateTarget || !user) return;
+    setReinstateLoading(true);
+    const { error } = await supabase
+      .from("businesses")
+      .update({
+        status: "approved" as any,
+        admin_feedback: null,
+        reviewed_by: user.id,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", reinstateTarget.id);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      await supabase.from("admin_reviews").insert({
+        business_id: reinstateTarget.id,
+        reviewer_id: user.id,
+        action: "reinstated",
+        comments: "Business reinstated to approved status.",
+      });
+      await supabase.from("notifications").insert({
+        user_id: reinstateTarget.owner_id,
+        title: "Business Reinstated! 🎉",
+        message: `Your business "${reinstateTarget.name}" has been reinstated and is now live on the platform again.`,
+      });
+      toast.success(`${reinstateTarget.name} has been reinstated.`);
+      setReinstateTarget(null);
+      fetchBusinesses();
+    }
+    setReinstateLoading(false);
+  };
 
   const toggleFeatured = async (biz: Business) => {
     const newVal = !biz.featured;
@@ -155,209 +196,282 @@ const ActiveBusinesses = () => {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold text-foreground">Businesses</h1>
-        <p className="text-muted-foreground text-sm mt-1">All active and published businesses on the platform.</p>
+        <p className="text-muted-foreground text-sm mt-1">Manage all businesses on the platform.</p>
       </div>
 
-      {/* Search & Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search businesses..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 bg-secondary/50 border-border h-10"
-          />
-        </div>
-        <Button variant="outline" size="sm" className="h-10 gap-2" onClick={() => setShowFilters(!showFilters)}>
-          <SlidersHorizontal className="w-4 h-4" />
-          Filters
-          {activeFilterCount > 0 && (
-            <Badge className="h-5 w-5 p-0 flex items-center justify-center text-[10px]">{activeFilterCount}</Badge>
-          )}
-        </Button>
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="active" className="gap-2">
+            Active <Badge variant="secondary" className="text-[10px] ml-1">{businesses.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="suspended" className="gap-2">
+            <ShieldAlert className="w-3.5 h-3.5" /> Suspended <Badge variant="secondary" className="text-[10px] ml-1">{suspendedBusinesses.length}</Badge>
+          </TabsTrigger>
+        </TabsList>
 
-      {showFilters && (
-        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-foreground">Filters</h3>
-            {activeFilterCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs h-7 gap-1">
-                <X className="w-3 h-3" /> Clear All
-              </Button>
-            )}
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Industry</label>
-              <Select value={industry} onValueChange={setIndustry}>
-                <SelectTrigger className="bg-secondary/50 border-border"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-card border-border z-50">
-                  {INDUSTRIES.map((ind) => (<SelectItem key={ind} value={ind}>{ind}</SelectItem>))}
-                </SelectContent>
-              </Select>
+        {/* Active Businesses Tab */}
+        <TabsContent value="active" className="space-y-4 mt-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search businesses..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 bg-secondary/50 border-border h-10"
+              />
             </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Location</label>
-              <Select value={location} onValueChange={setLocation}>
-                <SelectTrigger className="bg-secondary/50 border-border"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-card border-border z-50">
-                  {LOCATIONS.map((loc) => (<SelectItem key={loc} value={loc}>{loc}</SelectItem>))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Button variant="outline" size="sm" className="h-10 gap-2" onClick={() => setShowFilters(!showFilters)}>
+              <SlidersHorizontal className="w-4 h-4" />
+              Filters
+              {activeFilterCount > 0 && (
+                <Badge className="h-5 w-5 p-0 flex items-center justify-center text-[10px]">{activeFilterCount}</Badge>
+              )}
+            </Button>
           </div>
-        </motion.div>
-      )}
 
-      <div className="text-sm text-muted-foreground">
-        {filtered.length} {filtered.length !== 1 ? "businesses" : "business"} found
-      </div>
-
-      {/* Business List */}
-      {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      ) : filtered.length === 0 ? (
-        <Card className="border-border/40">
-          <CardContent className="py-12 text-center">
-            <Building2 className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-            <p className="text-muted-foreground text-sm">No businesses found.</p>
-            {(search || activeFilterCount > 0) && (
-              <Button variant="outline" size="sm" onClick={clearFilters} className="mt-3">Clear Filters</Button>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((biz, i) => (
-            <motion.div
-              key={biz.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: i * 0.03 }}
-            >
-              <Card className="border-border/40 hover:border-primary/30 transition-all hover:shadow-md group">
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-display font-semibold text-foreground truncate">{biz.name}</h3>
-                        {biz.featured && (
-                          <Star className="w-3.5 h-3.5 fill-primary text-primary shrink-0" />
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        {biz.industry && <Badge variant="secondary" className="text-[10px]">{biz.industry}</Badge>}
-                        {biz.location && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" /> {biz.location}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => toggleFeatured(biz)}
-                        className={`p-1.5 rounded-md transition-colors ${
-                          biz.featured
-                            ? "text-primary hover:bg-primary/10"
-                            : "text-muted-foreground hover:bg-secondary/50 hover:text-primary"
-                        }`}
-                        title={biz.featured ? "Remove from featured" : "Mark as featured"}
-                      >
-                        {biz.featured ? (
-                          <Star className="w-4 h-4 fill-primary" />
-                        ) : (
-                          <StarOff className="w-4 h-4" />
-                        )}
-                      </button>
-                      <a href={`/business/${biz.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-md hover:bg-secondary/50 text-muted-foreground hover:text-primary transition-colors">
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </div>
-                  </div>
-
-                  {biz.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{biz.description}</p>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-2">
-                    {biz.funding_goal && (
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <DollarSign className="w-3 h-3 text-primary" />
-                        <span className="text-muted-foreground">Goal:</span>
-                        <span className="font-medium text-foreground">৳{(biz.funding_goal / 1000000).toFixed(1)}M</span>
-                      </div>
-                    )}
-                    {biz.revenue_share_pct && (
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <TrendingUp className="w-3 h-3 text-primary" />
-                        <span className="text-muted-foreground">Share:</span>
-                        <span className="font-medium text-foreground">{biz.revenue_share_pct}%</span>
-                      </div>
-                    )}
-                    {biz.region && (
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <Globe className="w-3 h-3 text-primary" />
-                        <span className="font-medium text-foreground">{biz.region === "bd" ? "Bangladesh" : "Global"}</span>
-                      </div>
-                    )}
-                    {biz.funded_amount != null && biz.funding_goal ? (
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <DollarSign className="w-3 h-3 text-emerald-500" />
-                        <span className="font-medium text-foreground">{Math.round((biz.funded_amount / biz.funding_goal) * 100)}% funded</span>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  {/* Funding progress */}
-                  {biz.funded_amount != null && biz.funding_goal ? (
-                    <div className="mt-3">
-                      <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all"
-                          style={{ width: `${Math.min(100, (biz.funded_amount / biz.funding_goal) * 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {/* Disapprove actions */}
-                  <div className="mt-3 pt-3 border-t border-border/30 flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 gap-1.5 text-xs text-orange-500 border-orange-500/30 hover:bg-orange-500/10"
-                      onClick={() => {
-                        setDisapproveTarget(biz);
-                        setDisapproveAction("suspended");
-                        setDisapproveFeedback("");
-                      }}
-                    >
-                      <Ban className="w-3.5 h-3.5" /> Suspend
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
-                      onClick={() => {
-                        setDisapproveTarget(biz);
-                        setDisapproveAction("rejected");
-                        setDisapproveFeedback("");
-                      }}
-                    >
-                      <XCircle className="w-3.5 h-3.5" /> Revoke
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+          {showFilters && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-foreground">Filters</h3>
+                {activeFilterCount > 0 && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs h-7 gap-1">
+                    <X className="w-3 h-3" /> Clear All
+                  </Button>
+                )}
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Industry</label>
+                  <Select value={industry} onValueChange={setIndustry}>
+                    <SelectTrigger className="bg-secondary/50 border-border"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-card border-border z-50">
+                      {INDUSTRIES.map((ind) => (<SelectItem key={ind} value={ind}>{ind}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Location</label>
+                  <Select value={location} onValueChange={setLocation}>
+                    <SelectTrigger className="bg-secondary/50 border-border"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-card border-border z-50">
+                      {LOCATIONS.map((loc) => (<SelectItem key={loc} value={loc}>{loc}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </motion.div>
-          ))}
-        </div>
-      )}
+          )}
+
+          <div className="text-sm text-muted-foreground">
+            {filtered.length} {filtered.length !== 1 ? "businesses" : "business"} found
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <Card className="border-border/40">
+              <CardContent className="py-12 text-center">
+                <Building2 className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground text-sm">No businesses found.</p>
+                {(search || activeFilterCount > 0) && (
+                  <Button variant="outline" size="sm" onClick={clearFilters} className="mt-3">Clear Filters</Button>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((biz, i) => (
+                <motion.div
+                  key={biz.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: i * 0.03 }}
+                >
+                  <Card className="border-border/40 hover:border-primary/30 transition-all hover:shadow-md group">
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-display font-semibold text-foreground truncate">{biz.name}</h3>
+                            {biz.featured && (
+                              <Star className="w-3.5 h-3.5 fill-primary text-primary shrink-0" />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {biz.industry && <Badge variant="secondary" className="text-[10px]">{biz.industry}</Badge>}
+                            {biz.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" /> {biz.location}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => toggleFeatured(biz)}
+                            className={`p-1.5 rounded-md transition-colors ${
+                              biz.featured
+                                ? "text-primary hover:bg-primary/10"
+                                : "text-muted-foreground hover:bg-secondary/50 hover:text-primary"
+                            }`}
+                            title={biz.featured ? "Remove from featured" : "Mark as featured"}
+                          >
+                            {biz.featured ? (
+                              <Star className="w-4 h-4 fill-primary" />
+                            ) : (
+                              <StarOff className="w-4 h-4" />
+                            )}
+                          </button>
+                          <a href={`/business/${biz.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-md hover:bg-secondary/50 text-muted-foreground hover:text-primary transition-colors">
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        </div>
+                      </div>
+
+                      {biz.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{biz.description}</p>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-2">
+                        {biz.funding_goal && (
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <DollarSign className="w-3 h-3 text-primary" />
+                            <span className="text-muted-foreground">Goal:</span>
+                            <span className="font-medium text-foreground">৳{(biz.funding_goal / 1000000).toFixed(1)}M</span>
+                          </div>
+                        )}
+                        {biz.revenue_share_pct && (
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <TrendingUp className="w-3 h-3 text-primary" />
+                            <span className="text-muted-foreground">Share:</span>
+                            <span className="font-medium text-foreground">{biz.revenue_share_pct}%</span>
+                          </div>
+                        )}
+                        {biz.region && (
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <Globe className="w-3 h-3 text-primary" />
+                            <span className="font-medium text-foreground">{biz.region === "bd" ? "Bangladesh" : "Global"}</span>
+                          </div>
+                        )}
+                        {biz.funded_amount != null && biz.funding_goal ? (
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <DollarSign className="w-3 h-3 text-emerald-500" />
+                            <span className="font-medium text-foreground">{Math.round((biz.funded_amount / biz.funding_goal) * 100)}% funded</span>
+                          </div>
+                        ) : null}
+                      </div>
+
+                      {biz.funded_amount != null && biz.funding_goal ? (
+                        <div className="mt-3">
+                          <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-primary transition-all"
+                              style={{ width: `${Math.min(100, (biz.funded_amount / biz.funding_goal) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ) : null}
+
+                      <div className="mt-3 pt-3 border-t border-border/30 flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 gap-1.5 text-xs text-orange-500 border-orange-500/30 hover:bg-orange-500/10"
+                          onClick={() => {
+                            setDisapproveTarget(biz);
+                            setDisapproveAction("suspended");
+                            setDisapproveFeedback("");
+                          }}
+                        >
+                          <Ban className="w-3.5 h-3.5" /> Suspend
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
+                          onClick={() => {
+                            setDisapproveTarget(biz);
+                            setDisapproveAction("rejected");
+                            setDisapproveFeedback("");
+                          }}
+                        >
+                          <XCircle className="w-3.5 h-3.5" /> Revoke
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Suspended Businesses Tab */}
+        <TabsContent value="suspended" className="space-y-4 mt-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : suspendedBusinesses.length === 0 ? (
+            <Card className="border-border/40">
+              <CardContent className="py-12 text-center">
+                <ShieldAlert className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground text-sm">No suspended businesses.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {suspendedBusinesses.map((biz, i) => (
+                <motion.div
+                  key={biz.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: i * 0.03 }}
+                >
+                  <Card className="border-orange-500/20 hover:border-orange-500/40 transition-all hover:shadow-md">
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-display font-semibold text-foreground truncate">{biz.name}</h3>
+                            <Badge variant="outline" className="text-[10px] border-orange-500/30 text-orange-600">Suspended</Badge>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {biz.industry && <Badge variant="secondary" className="text-[10px]">{biz.industry}</Badge>}
+                            {biz.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" /> {biz.location}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <a href={`/business/${biz.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-md hover:bg-secondary/50 text-muted-foreground hover:text-primary transition-colors shrink-0">
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </div>
+                      {biz.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{biz.description}</p>
+                      )}
+                      <div className="mt-3 pt-3 border-t border-border/30">
+                        <Button
+                          size="sm"
+                          className="w-full gap-1.5 text-xs"
+                          onClick={() => setReinstateTarget(biz)}
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" /> Reinstate to Active
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Disapproval Dialog */}
       <Dialog open={!!disapproveTarget} onOpenChange={(open) => !open && setDisapproveTarget(null)}>
@@ -402,6 +516,35 @@ const ActiveBusinesses = () => {
                 <><Ban className="w-4 h-4" /> Suspend Business</>
               ) : (
                 <><XCircle className="w-4 h-4" /> Revoke Approval</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reinstate Dialog */}
+      <Dialog open={!!reinstateTarget} onOpenChange={(open) => !open && setReinstateTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RotateCcw className="w-5 h-5 text-primary" />
+              Reinstate Business
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <p className="text-sm text-muted-foreground">
+              This will reinstate <span className="font-medium text-foreground">"{reinstateTarget?.name}"</span> back to approved status. It will be visible on the platform again and the owner will be notified.
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setReinstateTarget(null)} disabled={reinstateLoading}>
+              Cancel
+            </Button>
+            <Button onClick={handleReinstate} disabled={reinstateLoading} className="gap-2">
+              {reinstateLoading ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+              ) : (
+                <><RotateCcw className="w-4 h-4" /> Reinstate</>
               )}
             </Button>
           </DialogFooter>
