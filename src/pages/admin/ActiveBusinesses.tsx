@@ -299,7 +299,7 @@ const ActiveBusinesses = () => {
                         </div>
                         <div className="flex items-center gap-1.5">
                           {biz.industry && (
-                            <Badge variant="secondary" className="text-[11px] font-medium px-2 py-0.5">{biz.industry}</Badge>
+                            <Badge variant="secondary" className="text-xs font-medium px-2.5 py-0.5">{biz.industry}</Badge>
                           )}
                           <button
                             onClick={() => toggleFeatured(biz)}
