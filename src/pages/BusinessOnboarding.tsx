@@ -212,8 +212,8 @@ const BusinessOnboarding = () => {
         <div className="container mx-auto px-4 max-w-3xl">
           {/* Header */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
-            <h1 className="font-display text-4xl font-bold text-foreground mb-2">List Your Business</h1>
-            <p className="text-muted-foreground">Complete the form below to submit your business for admin review.</p>
+            <h1 className="font-display text-4xl font-bold text-foreground mb-2">{editId ? "Edit Your Business" : "List Your Business"}</h1>
+            <p className="text-muted-foreground">{editId ? "Update your application and resubmit for review." : "Complete the form below to submit your business for admin review."}</p>
           </motion.div>
 
           {/* Step Indicator */}

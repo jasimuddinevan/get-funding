@@ -282,6 +282,13 @@ const BusinessOwnerDashboard = () => {
 
                           {/* Actions */}
                           <div className="flex sm:flex-col gap-2 shrink-0">
+                            {(biz.status === "draft" || biz.status === "rejected") && (
+                              <Button variant="outline" size="sm" className="gap-1.5 text-xs" asChild>
+                                <Link to={`/onboarding/business/${biz.id}`}>
+                                  <FileSearch className="w-3.5 h-3.5" /> Edit & Resubmit
+                                </Link>
+                              </Button>
+                            )}
                             {biz.status === "approved" && (
                               <Button variant="outline" size="sm" className="gap-1.5 text-xs" asChild>
                                 <Link to={`/business/${biz.id}`}>
