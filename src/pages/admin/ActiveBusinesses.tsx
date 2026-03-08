@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   Building2, Search, MapPin, TrendingUp, DollarSign, Loader2, Star, Globe,
-  ExternalLink, SlidersHorizontal, X, Ban, XCircle, AlertTriangle,
+  ExternalLink, SlidersHorizontal, X, Ban, XCircle, AlertTriangle, StarOff,
 } from "lucide-react";
 import { INDUSTRIES } from "@/data/businesses";
 
@@ -114,6 +114,20 @@ const ActiveBusinesses = () => {
       fetchBusinesses();
     }
     setDisapproveLoading(false);
+  };
+
+  const toggleFeatured = async (biz: Business) => {
+    const newVal = !biz.featured;
+    const { error } = await supabase
+      .from("businesses")
+      .update({ featured: newVal })
+      .eq("id", biz.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(`${biz.name} ${newVal ? "marked as featured" : "removed from featured"}`);
+      setBusinesses((prev) => prev.map((b) => (b.id === biz.id ? { ...b, featured: newVal } : b)));
+    }
   };
 
   const filtered = useMemo(() => {
@@ -244,9 +258,26 @@ const ActiveBusinesses = () => {
                         )}
                       </div>
                     </div>
-                    <a href={`/business/${biz.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-md hover:bg-secondary/50 text-muted-foreground hover:text-primary transition-colors shrink-0">
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => toggleFeatured(biz)}
+                        className={`p-1.5 rounded-md transition-colors ${
+                          biz.featured
+                            ? "text-primary hover:bg-primary/10"
+                            : "text-muted-foreground hover:bg-secondary/50 hover:text-primary"
+                        }`}
+                        title={biz.featured ? "Remove from featured" : "Mark as featured"}
+                      >
+                        {biz.featured ? (
+                          <Star className="w-4 h-4 fill-primary" />
+                        ) : (
+                          <StarOff className="w-4 h-4" />
+                        )}
+                      </button>
+                      <a href={`/business/${biz.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-md hover:bg-secondary/50 text-muted-foreground hover:text-primary transition-colors">
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </div>
                   </div>
 
                   {biz.description && (
