@@ -94,6 +94,14 @@ const BusinessReviews = () => {
   const [deleteTarget, setDeleteTarget] = useState<Business | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // Detail state
+  const [ownerProfile, setOwnerProfile] = useState<{ full_name: string | null; phone: string | null; avatar_url: string | null; user_id: string } | null>(null);
+  const [reviewHistory, setReviewHistory] = useState<Array<{ id: string; action: string; comments: string | null; created_at: string; reviewer_name: string | null }>>([]);
+  const [teamMembers, setTeamMembers] = useState<Array<{ id: string; name: string; role: string | null }>>([]);
+  const [documents, setDocuments] = useState<Array<{ id: string; document_type: string; file_name: string | null; file_url: string }>>([]);
+  const [investmentCount, setInvestmentCount] = useState(0);
+  const [detailLoading, setDetailLoading] = useState(false);
+
   const fetchBusinesses = async () => {
     let query = supabase.from("businesses").select("*").order("created_at", { ascending: false });
     if (filter !== "all") query = query.eq("status", filter);
