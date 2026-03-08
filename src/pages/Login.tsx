@@ -22,7 +22,13 @@ const Login = () => {
     const { error } = await signIn(email, password);
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      if (error.message === "Invalid login credentials") {
+        toast.error("Incorrect email or password. Please try again.");
+      } else if (error.message === "Email not confirmed") {
+        toast.error("Please verify your email before signing in.");
+      } else {
+        toast.error(error.message);
+      }
     } else {
       toast.success("Welcome back!");
       navigate("/");
