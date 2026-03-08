@@ -47,6 +47,7 @@ const AppShell = () => {
             <Route path="/signup" element={<SignUp />} />
             <Route path="/about" element={<About />} />
             <Route path="/onboarding/business" element={<BusinessOnboarding />} />
+            <Route path="/business-dashboard" element={<BusinessOwnerDashboard />} />
             <Route path="/investor" element={<InvestorDashboard />}>
               <Route index element={<PortfolioOverview />} />
               <Route path="investments" element={<InvestmentHistory />} />
