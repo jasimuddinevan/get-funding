@@ -31,7 +31,7 @@ const BusinessCard = ({ business: biz, view }: BusinessCardProps) => {
   if (view === "list") {
     return (
       <Link to={`/business/${biz.id}`}>
-        <Card className="bg-card border-border/50 rounded-2xl hover:shadow-lg hover:shadow-primary/[0.06] hover:border-primary/40 transition-all duration-300 cursor-pointer group">
+        <Card className="bg-card border-border/50 rounded-2xl hover:shadow-lg hover:shadow-primary/[0.06] hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer group">
           <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex items-center gap-4 flex-1 min-w-0">
               <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold shrink-0">
