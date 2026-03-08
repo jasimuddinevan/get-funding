@@ -367,12 +367,12 @@ const ActiveBusinesses = () => {
                             setDisapproveFeedback("");
                           }}
                         >
-                          <Ban className="w-3 h-3" /> Suspend
+                          <Ban className="w-3.5 h-3.5" /> Suspend
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1 gap-1.5 text-[12px] h-8 rounded-md text-destructive border-destructive/20 hover:bg-destructive/10 hover:border-destructive/30"
+                          className="flex-1 gap-1.5 text-xs h-9 rounded-md text-destructive border-destructive/20 hover:bg-destructive/10 hover:border-destructive/30"
                           onClick={() => {
                             setDisapproveTarget(biz);
                             setDisapproveAction("rejected");
