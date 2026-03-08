@@ -63,7 +63,9 @@ const BusinessDetail = () => {
   const [amount, setAmount] = useState("");
   const [step, setStep] = useState<"select" | "confirm" | "upload" | "success">("select");
   const [submitting, setSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("bkash");
+  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofPreview, setProofPreview] = useState<string | null>(null);
   const [investmentId, setInvestmentId] = useState<string | null>(null);
