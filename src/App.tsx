@@ -22,6 +22,7 @@ import Notifications from "./pages/investor/Notifications";
 import AdminPanel from "./pages/admin/AdminPanel";
 import AdminDashboardOverview from "./pages/admin/AdminDashboardOverview";
 import BusinessReviews from "./pages/admin/BusinessReviews";
+import ActiveBusinesses from "./pages/admin/ActiveBusinesses";
 import UserManagement from "./pages/admin/UserManagement";
 import InvestmentMonitoring from "./pages/admin/InvestmentMonitoring";
 import PaymentApprovals from "./pages/admin/PaymentApprovals";
