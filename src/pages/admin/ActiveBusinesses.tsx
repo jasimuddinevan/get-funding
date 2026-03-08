@@ -421,22 +421,22 @@ const ActiveBusinesses = () => {
                         <Badge variant="outline" className="text-[11px] font-medium px-2 py-0.5 border-orange-500/25 text-orange-500">Suspended</Badge>
                       </div>
 
-                      <h3 className="font-display text-base font-semibold text-foreground leading-snug mb-0.5 truncate">{biz.name}</h3>
+                      <h3 className="font-display text-lg font-semibold text-foreground leading-snug mb-0.5 truncate">{biz.name}</h3>
 
                       {biz.location && (
-                        <p className="flex items-center gap-1 text-[13px] text-muted-foreground mb-2.5">
-                          <MapPin className="w-3 h-3 shrink-0" /> {biz.location}
+                        <p className="flex items-center gap-1 text-sm text-muted-foreground mb-2.5">
+                          <MapPin className="w-3.5 h-3.5 shrink-0" /> {biz.location}
                         </p>
                       )}
 
                       {biz.description && (
-                        <p className="text-[13px] text-muted-foreground leading-relaxed line-clamp-2 mb-3">{biz.description}</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3">{biz.description}</p>
                       )}
 
                       <div className="pt-3 mt-1 border-t border-border/30">
                         <Button
                           size="sm"
-                          className="w-full gap-1.5 text-[13px] h-8 rounded-md"
+                          className="w-full gap-1.5 text-sm h-9 rounded-md"
                           onClick={() => setReinstateTarget(biz)}
                         >
                           <RotateCcw className="w-3.5 h-3.5" /> Reinstate to Active
