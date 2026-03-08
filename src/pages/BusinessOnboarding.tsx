@@ -483,9 +483,9 @@ const BusinessOnboarding = () => {
                   className="gap-2 glow-gold"
                 >
                   {submitting ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
+                    <><Loader2 className="w-4 h-4 animate-spin" /> {editId ? "Updating..." : "Submitting..."}</>
                   ) : (
-                    <><CheckCircle2 className="w-4 h-4" /> Submit for Review</>
+                    <><CheckCircle2 className="w-4 h-4" /> {editId ? "Update & Resubmit" : "Submit for Review"}</>
                   )}
                 </Button>
               )}
