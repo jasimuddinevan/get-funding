@@ -54,6 +54,7 @@ const BusinessDetail = () => {
   const [tiers, setTiers] = useState<InvestmentTier[]>([]);
   const [loading, setLoading] = useState(true);
   const [investorCount, setInvestorCount] = useState(0);
+  const [isVerifiedInvestor, setIsVerifiedInvestor] = useState(false);
 
   const [investOpen, setInvestOpen] = useState(false);
   const [selectedTierIdx, setSelectedTierIdx] = useState<number | null>(null);
@@ -74,12 +75,24 @@ const BusinessDetail = () => {
         supabase.from("businesses").select("*").eq("id", id).maybeSingle(),
         supabase.from("business_team_members").select("*").eq("business_id", id),
         supabase.from("investment_tiers").select("*").eq("business_id", id).order("min_amount", { ascending: true }),
-        supabase.from("investments").select("id", { count: "exact" }).eq("business_id", id),
+        supabase.from("investments").select("id", { count: "exact" }).eq("business_id", id).eq("status", "active"),
       ]);
       setBusiness(bizRes.data);
       setTeam(teamRes.data ?? []);
       setTiers(tiersRes.data ?? []);
       setInvestorCount(investRes.count ?? 0);
+
+      // Check if current user is a verified investor
+      if (user) {
+        const { count } = await supabase
+          .from("investments")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", id)
+          .eq("investor_id", user.id)
+          .eq("status", "active");
+        setIsVerifiedInvestor((count ?? 0) > 0);
+      }
+
       setLoading(false);
     };
     fetchData();
@@ -231,6 +244,11 @@ const BusinessDetail = () => {
                     {business.status === "approved" && (
                       <Badge className="gap-1 bg-primary/15 text-primary border-primary/30">
                         <ShieldCheck className="w-3.5 h-3.5" /> Verified
+                      </Badge>
+                    )}
+                    {isVerifiedInvestor && (
+                      <Badge className="gap-1 bg-emerald-500/15 text-emerald-600 border-emerald-500/30">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Verified Investor
                       </Badge>
                     )}
                   </div>
