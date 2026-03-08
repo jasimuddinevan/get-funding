@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, MapPin, TrendingUp, ShieldCheck, Calendar, Globe, Users,
   DollarSign, BarChart3, FileText, Building2, Target, Percent, Clock,
   ArrowRight, Heart, Share2, MessageSquare, Loader2, CheckCircle2,
-  Briefcase, Zap, Linkedin,
+  Briefcase, Zap, Linkedin, Upload, Image as ImageIcon, CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,6 +36,14 @@ const formatCurrency = (val: number) => {
 
 const formatCurrencyFull = (val: number) => `৳${val.toLocaleString()}`;
 
+const PAYMENT_METHODS = [
+  { value: "bkash", label: "bKash" },
+  { value: "nagad", label: "Nagad" },
+  { value: "rocket", label: "Rocket" },
+  { value: "bank_transfer", label: "Bank Transfer" },
+  { value: "upay", label: "Upay" },
+];
+
 const BusinessDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -49,8 +58,13 @@ const BusinessDetail = () => {
   const [investOpen, setInvestOpen] = useState(false);
   const [selectedTierIdx, setSelectedTierIdx] = useState<number | null>(null);
   const [amount, setAmount] = useState("");
-  const [step, setStep] = useState<"select" | "confirm" | "success">("select");
+  const [step, setStep] = useState<"select" | "confirm" | "upload" | "success">("select");
   const [submitting, setSubmitting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("bkash");
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofPreview, setProofPreview] = useState<string | null>(null);
+  const [investmentId, setInvestmentId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -113,6 +127,10 @@ const BusinessDetail = () => {
     setSelectedTierIdx(tierIdx ?? null);
     setAmount(tierIdx != null && tiers[tierIdx] ? tiers[tierIdx].min_amount.toString() : (business.min_investment?.toString() ?? "50000"));
     setStep("select");
+    setPaymentMethod("bkash");
+    setProofFile(null);
+    setProofPreview(null);
+    setInvestmentId(null);
     setInvestOpen(true);
   };
 
@@ -125,19 +143,60 @@ const BusinessDetail = () => {
   const handleConfirmInvest = async () => {
     if (!user || !canConfirm) return;
     setSubmitting(true);
-    const { error } = await supabase.from("investments").insert({
+    const { data, error } = await supabase.from("investments").insert({
       investor_id: user.id,
       business_id: business.id,
       amount: parsedAmount,
       revenue_share_pct: revenueShareForAmount,
       tier_id: selectedTier?.id ?? null,
-      status: "active",
-    });
+      status: "pending_payment",
+      payment_method: paymentMethod,
+    }).select("id").single();
+
     if (error) {
       toast.error(error.message);
       setSubmitting(false);
       return;
     }
+    setInvestmentId(data.id);
+    setStep("upload");
+    setSubmitting(false);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File too large. Max 5MB.");
+      return;
+    }
+    setProofFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setProofPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleUploadProof = async () => {
+    if (!proofPreview || !investmentId) return;
+    setSubmitting(true);
+
+    // Store proof as data URL in the column (no storage extension)
+    const { error } = await supabase
+      .from("investments")
+      .update({
+        payment_proof_url: proofPreview,
+        status: "pending_approval",
+      })
+      .eq("id", investmentId);
+
+    if (error) {
+      toast.error("Failed to upload proof: " + error.message);
+      setSubmitting(false);
+      return;
+    }
+
+    // Notify admins (insert notification for all admins would be complex, so notify the investment owner for now)
+    toast.success("Payment proof uploaded! Awaiting admin approval.");
     setStep("success");
     setSubmitting(false);
   };
@@ -215,7 +274,7 @@ const BusinessDetail = () => {
             </div>
 
             {/* Right: Funding Card */}
-            <Card className="glass-card border-border/40 w-full lg:w-[380px] shrink-0 self-start">
+            <Card className="border-border/40 w-full lg:w-[380px] shrink-0 self-start">
               <CardContent className="p-6">
                 <div className="text-center mb-5">
                   <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Total Funded</div>
@@ -249,7 +308,7 @@ const BusinessDetail = () => {
                   </div>
                 </div>
 
-                <Button className="w-full glow-gold h-12 text-base gap-2" onClick={() => openInvestDialog()}>
+                <Button className="w-full h-12 text-base gap-2" onClick={() => openInvestDialog()}>
                   Invest Now <ArrowRight className="w-5 h-5" />
                 </Button>
                 <p className="text-[11px] text-muted-foreground text-center mt-2">
@@ -263,11 +322,11 @@ const BusinessDetail = () => {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
             {[
               { icon: DollarSign, label: "Annual Revenue", value: formatCurrency(currentRevenue), color: "text-primary" },
-              { icon: TrendingUp, label: "Growth Rate", value: `${business.growth_rate ?? 0}% YoY`, color: "text-green-500" },
+              { icon: TrendingUp, label: "Growth Rate", value: `${business.growth_rate ?? 0}% YoY`, color: "text-emerald-500" },
               { icon: Percent, label: "Profit Margin", value: `${business.profit_margin ?? 0}%`, color: "text-blue-500" },
               { icon: Clock, label: "Payout Frequency", value: business.payout_frequency ? business.payout_frequency.charAt(0).toUpperCase() + business.payout_frequency.slice(1) : "N/A", color: "text-amber-500" },
             ].map((item) => (
-              <Card key={item.label} className="glass-card border-border/40">
+              <Card key={item.label} className="border-border/40">
                 <CardContent className="p-4 flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-xl bg-secondary/70 flex items-center justify-center ${item.color}`}>
                     <item.icon className="w-5 h-5" />
@@ -294,7 +353,7 @@ const BusinessDetail = () => {
             <TabsContent value="overview">
               <div className="grid md:grid-cols-2 gap-6">
                 {business.problem_solved && (
-                  <Card className="glass-card border-border/40">
+                  <Card className="border-border/40">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2"><FileText className="w-4 h-4 text-primary" /> Problem Solved</CardTitle>
                     </CardHeader>
@@ -302,7 +361,7 @@ const BusinessDetail = () => {
                   </Card>
                 )}
                 {business.target_market && (
-                  <Card className="glass-card border-border/40">
+                  <Card className="border-border/40">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2"><Globe className="w-4 h-4 text-primary" /> Target Market</CardTitle>
                     </CardHeader>
@@ -310,7 +369,7 @@ const BusinessDetail = () => {
                   </Card>
                 )}
                 {business.competitive_advantage && (
-                  <Card className="glass-card border-border/40">
+                  <Card className="border-border/40">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-primary" /> Competitive Advantage</CardTitle>
                     </CardHeader>
@@ -318,7 +377,7 @@ const BusinessDetail = () => {
                   </Card>
                 )}
                 {business.financial_projection && (
-                  <Card className="glass-card border-border/40">
+                  <Card className="border-border/40">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2"><BarChart3 className="w-4 h-4 text-primary" /> Financial Projection</CardTitle>
                     </CardHeader>
@@ -335,7 +394,7 @@ const BusinessDetail = () => {
                   {tiers.map((tier, i) => {
                     const isPopular = i === Math.floor(tiers.length / 2);
                     return (
-                      <Card key={tier.id} className={`relative overflow-hidden transition-all hover:shadow-lg ${isPopular ? "border-primary/50 ring-1 ring-primary/20" : "glass-card border-border/40"}`}>
+                      <Card key={tier.id} className={`relative overflow-hidden transition-all hover:shadow-lg ${isPopular ? "border-primary/50 ring-1 ring-primary/20" : "border-border/40"}`}>
                         {isPopular && (
                           <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-xl">
                             POPULAR
@@ -369,7 +428,7 @@ const BusinessDetail = () => {
                             </div>
                           </div>
                           <Button
-                            className={`w-full ${isPopular ? "glow-gold" : ""}`}
+                            className={`w-full ${isPopular ? "" : ""}`}
                             variant={isPopular ? "default" : "outline"}
                             onClick={() => openInvestDialog(i)}
                           >
@@ -381,10 +440,10 @@ const BusinessDetail = () => {
                   })}
                 </div>
               ) : (
-                <Card className="glass-card border-border/40">
+                <Card className="border-border/40">
                   <CardContent className="p-8 text-center">
                     <p className="text-muted-foreground">No investment tiers available yet. You can still invest directly.</p>
-                    <Button className="mt-4 glow-gold" onClick={() => openInvestDialog()}>Invest Now</Button>
+                    <Button className="mt-4" onClick={() => openInvestDialog()}>Invest Now</Button>
                   </CardContent>
                 </Card>
               )}
@@ -395,7 +454,7 @@ const BusinessDetail = () => {
               {team.length > 0 ? (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {team.map((member) => (
-                    <Card key={member.id} className="glass-card border-border/40 hover:border-primary/30 transition-all group">
+                    <Card key={member.id} className="border-border/40 hover:border-primary/30 transition-all group">
                       <CardContent className="p-6">
                         <div className="flex items-center gap-4 mb-4">
                           <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-xl shrink-0 group-hover:bg-primary/25 transition-colors">
@@ -419,7 +478,7 @@ const BusinessDetail = () => {
                   ))}
                 </div>
               ) : (
-                <Card className="glass-card border-border/40">
+                <Card className="border-border/40">
                   <CardContent className="p-8 text-center">
                     <p className="text-muted-foreground">Team information will be available soon.</p>
                   </CardContent>
@@ -429,7 +488,7 @@ const BusinessDetail = () => {
 
             {/* Q&A */}
             <TabsContent value="qna">
-              <Card className="glass-card border-border/40">
+              <Card className="border-border/40">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2"><MessageSquare className="w-5 h-5 text-primary" /> Common Questions</CardTitle>
                 </CardHeader>
@@ -438,6 +497,7 @@ const BusinessDetail = () => {
                     { q: "How are revenue shares calculated?", a: "Revenue shares are calculated on gross revenue before expenses. Payouts are automated through FundBridge based on verified financial reports." },
                     { q: "What happens if the business underperforms?", a: "Revenue sharing is proportional — if revenue drops, payouts adjust accordingly. Your investment is tied to real performance, not fixed promises." },
                     { q: "Can I exit my investment early?", a: "After a 12-month lock-in period, you can list your share on FundBridge's secondary marketplace (coming soon)." },
+                    { q: "How does payment verification work?", a: "After selecting an amount, you complete payment via bKash, Nagad, or bank transfer, then upload a screenshot/receipt. Our admin team verifies and activates your investment within 24 hours." },
                   ].map((item) => (
                     <div key={item.q} className="border-b border-border/40 pb-4 last:border-0 last:pb-0">
                       <h4 className="font-semibold text-foreground text-sm mb-1.5">{item.q}</h4>
@@ -468,7 +528,7 @@ const BusinessDetail = () => {
                 {tiers.length > 0 && (
                   <div>
                     <Label className="mb-2 block text-sm">Select a Tier</Label>
-                    <div className={`grid gap-2 ${tiers.length <= 3 ? `grid-cols-${tiers.length}` : "grid-cols-3"}`}>
+                    <div className="grid grid-cols-3 gap-2">
                       {tiers.map((tier, i) => (
                         <button
                           key={tier.id}
@@ -516,7 +576,7 @@ const BusinessDetail = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {[5000, 10000, 50000, 100000, 500000].map((val) => (
+                  {[50000, 100000, 250000, 500000, 1000000].map((val) => (
                     <button
                       key={val}
                       type="button"
@@ -532,6 +592,20 @@ const BusinessDetail = () => {
                       {formatCurrency(val)}
                     </button>
                   ))}
+                </div>
+
+                <div>
+                  <Label className="mb-1.5 block text-sm">Payment Method</Label>
+                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <SelectTrigger className="bg-secondary/50 border-border">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border z-50">
+                      {PAYMENT_METHODS.map((m) => (
+                        <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {canConfirm && (
@@ -551,6 +625,10 @@ const BusinessDetail = () => {
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Payment</span>
+                      <span className="font-medium text-foreground">{PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Est. Monthly Return</span>
                       <span className="font-semibold text-foreground">
                         ~{formatCurrencyFull(Math.round((parsedAmount * revenueShareForAmount) / 100 / 12))}
@@ -562,7 +640,7 @@ const BusinessDetail = () => {
 
               <DialogFooter>
                 <Button variant="outline" onClick={() => setInvestOpen(false)}>Cancel</Button>
-                <Button className="glow-gold gap-2" disabled={!canConfirm} onClick={() => setStep("confirm")}>
+                <Button className="gap-2" disabled={!canConfirm} onClick={() => setStep("confirm")}>
                   Continue <ArrowRight className="w-4 h-4" />
                 </Button>
               </DialogFooter>
@@ -572,7 +650,7 @@ const BusinessDetail = () => {
           {step === "confirm" && (
             <>
               <DialogHeader>
-                <DialogTitle className="font-display text-xl">Confirm Investment</DialogTitle>
+                <DialogTitle className="font-display text-xl">Confirm & Pay</DialogTitle>
               </DialogHeader>
               <div className="py-6 space-y-4">
                 <div className="rounded-xl border border-border bg-secondary/20 p-5 space-y-3">
@@ -589,6 +667,13 @@ const BusinessDetail = () => {
                     <span className="text-sm text-muted-foreground">Revenue Share</span>
                     <span className="text-sm font-bold text-primary">{revenueShareForAmount}%</span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Payment Method</span>
+                    <span className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                      <CreditCard className="w-3.5 h-3.5" />
+                      {PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label}
+                    </span>
+                  </div>
                   {selectedTier && (
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Tier / Payout</span>
@@ -598,15 +683,101 @@ const BusinessDetail = () => {
                     </div>
                   )}
                 </div>
+
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+                  <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-amber-500" /> Payment Instructions
+                  </h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Please send <strong className="text-foreground">{formatCurrencyFull(parsedAmount)}</strong> via{" "}
+                    <strong className="text-foreground">{PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label}</strong>.
+                    After completing the payment, you'll be asked to upload a screenshot or receipt as proof.
+                    Your investment will be activated once an admin verifies the payment.
+                  </p>
+                </div>
+
                 <p className="text-xs text-muted-foreground text-center">
-                  By confirming, you agree to the revenue-sharing terms. This action cannot be undone.
+                  By confirming, you agree to the revenue-sharing terms.
                 </p>
               </div>
               <DialogFooter className="gap-2">
                 <Button variant="outline" onClick={() => setStep("select")} disabled={submitting}>Back</Button>
-                <Button className="glow-gold gap-2" onClick={handleConfirmInvest} disabled={submitting}>
+                <Button className="gap-2" onClick={handleConfirmInvest} disabled={submitting}>
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                  {submitting ? "Processing..." : "Confirm Investment"}
+                  {submitting ? "Processing..." : "I've Paid — Continue"}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {step === "upload" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-display text-xl flex items-center gap-2">
+                  <Upload className="w-5 h-5 text-primary" />
+                  Upload Payment Proof
+                </DialogTitle>
+              </DialogHeader>
+              <div className="py-6 space-y-5">
+                <p className="text-sm text-muted-foreground">
+                  Upload a screenshot or photo of your payment receipt for admin verification.
+                </p>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+
+                {proofPreview ? (
+                  <div className="relative group">
+                    <img
+                      src={proofPreview}
+                      alt="Payment proof"
+                      className="w-full max-h-64 object-contain rounded-xl border border-border bg-secondary/20"
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute inset-0 flex items-center justify-center bg-background/70 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"
+                    >
+                      <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                        <Upload className="w-4 h-4" /> Change image
+                      </span>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full h-40 rounded-xl border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-3 transition-colors bg-secondary/10"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <ImageIcon className="w-6 h-6 text-primary" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-foreground">Click to upload receipt</p>
+                      <p className="text-xs text-muted-foreground">PNG, JPG up to 5MB</p>
+                    </div>
+                  </button>
+                )}
+
+                {proofFile && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                    {proofFile.name} ({(proofFile.size / 1024).toFixed(0)} KB)
+                  </p>
+                )}
+              </div>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={() => setStep("confirm")} disabled={submitting}>Back</Button>
+                <Button
+                  className="gap-2"
+                  disabled={!proofFile || submitting}
+                  onClick={handleUploadProof}
+                >
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {submitting ? "Uploading..." : "Submit for Approval"}
                 </Button>
               </DialogFooter>
             </>
@@ -614,15 +785,16 @@ const BusinessDetail = () => {
 
           {step === "success" && (
             <div className="py-8 text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-green-500/15 flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-8 h-8 text-green-500" />
+              <div className="w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
               </div>
-              <h3 className="font-display text-2xl font-bold text-foreground">Investment Successful!</h3>
-              <p className="text-sm text-muted-foreground">
-                You've invested <strong className="text-foreground">{formatCurrencyFull(parsedAmount)}</strong> in{" "}
-                <strong className="text-foreground">{business.name}</strong> with a{" "}
-                <strong className="text-primary">{revenueShareForAmount}%</strong> revenue share.
+              <h3 className="font-display text-2xl font-bold text-foreground">Payment Submitted!</h3>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                Your investment of <strong className="text-foreground">{formatCurrencyFull(parsedAmount)}</strong> in{" "}
+                <strong className="text-foreground">{business.name}</strong> is pending admin approval.
+                You'll be notified once it's verified.
               </p>
+              <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30">Pending Approval</Badge>
               <div className="flex gap-3 justify-center pt-2">
                 <Button variant="outline" onClick={() => setInvestOpen(false)}>Close</Button>
                 <Button onClick={() => navigate("/investor")}>View Portfolio</Button>
