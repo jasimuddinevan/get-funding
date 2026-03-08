@@ -320,8 +320,8 @@ const BusinessReviews = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-bold text-foreground">Business Management</h1>
-        <p className="text-muted-foreground text-sm mt-1">Review, edit, and manage all business applications.</p>
+        <h1 className="font-display text-3xl font-bold text-foreground">Pending Applications</h1>
+        <p className="text-muted-foreground text-sm mt-1">Review, approve, or reject incoming business applications.</p>
       </div>
 
       {/* Filter Tabs */}

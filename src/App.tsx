@@ -22,6 +22,7 @@ import Notifications from "./pages/investor/Notifications";
 import AdminPanel from "./pages/admin/AdminPanel";
 import AdminDashboardOverview from "./pages/admin/AdminDashboardOverview";
 import BusinessReviews from "./pages/admin/BusinessReviews";
+import ActiveBusinesses from "./pages/admin/ActiveBusinesses";
 import UserManagement from "./pages/admin/UserManagement";
 import InvestmentMonitoring from "./pages/admin/InvestmentMonitoring";
 import PaymentApprovals from "./pages/admin/PaymentApprovals";
@@ -54,6 +55,7 @@ const AppShell = () => {
             <Route path="/admin" element={<AdminPanel />}>
               <Route index element={<AdminDashboardOverview />} />
               <Route path="reviews" element={<BusinessReviews />} />
+              <Route path="businesses" element={<ActiveBusinesses />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="investments" element={<InvestmentMonitoring />} />
               <Route path="payments" element={<PaymentApprovals />} />
