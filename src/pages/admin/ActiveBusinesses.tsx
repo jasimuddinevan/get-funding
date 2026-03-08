@@ -379,7 +379,7 @@ const ActiveBusinesses = () => {
                             setDisapproveFeedback("");
                           }}
                         >
-                          <XCircle className="w-3 h-3" /> Revoke
+                          <XCircle className="w-3.5 h-3.5" /> Revoke
                         </Button>
                       </div>
                     </CardContent>
