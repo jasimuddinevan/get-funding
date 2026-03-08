@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,23 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, userRole } = useAuth();
   const navigate = useNavigate();
+  const [pendingRedirect, setPendingRedirect] = useState(false);
+
+  // Redirect once role is loaded after login
+  useEffect(() => {
+    if (pendingRedirect && userRole) {
+      if (userRole === "admin") {
+        navigate("/admin");
+      } else if (userRole === "business_owner") {
+        navigate("/onboarding/business");
+      } else {
+        navigate("/investor");
+      }
+      setPendingRedirect(false);
+    }
+  }, [pendingRedirect, userRole, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +46,7 @@ const Login = () => {
       }
     } else {
       toast.success("Welcome back!");
-      navigate("/");
+      setPendingRedirect(true);
     }
   };
 
