@@ -55,9 +55,13 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-3">
             <button
               onClick={() => setRegion(region === "bd" ? "global" : "bd")}
-              className="text-muted-foreground hover:text-foreground transition-colors text-sm flex items-center gap-1"
+              className="text-muted-foreground hover:text-foreground transition-colors text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-border hover:border-primary/40"
             >
-              {region === "bd" ? <MapPin className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+              {region === "bd" ? (
+                <><MapPin className="w-3.5 h-3.5" /> বাংলা</>
+              ) : (
+                <><Globe className="w-3.5 h-3.5" /> EN</>
+              )}
             </button>
             <button
               onClick={toggleTheme}
