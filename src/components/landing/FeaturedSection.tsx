@@ -18,7 +18,15 @@ interface FeaturedBusiness {
   funding_goal: number | null;
   funded_amount: number | null;
   status: string;
+  description: string | null;
 }
+
+const truncateDescription = (text: string | null, maxWords = 35) => {
+  if (!text) return "";
+  const words = text.split(/\s+/);
+  if (words.length <= maxWords) return text;
+  return words.slice(0, maxWords).join(" ") + "…";
+};
 
 const FeaturedSection = () => {
   const { t } = useLocale();
