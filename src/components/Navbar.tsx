@@ -16,8 +16,11 @@ const Navbar = () => {
   const navLinks = [
     { to: "/", label: "Home" },
     { to: "/explore", label: "Deals" },
-    { to: "/onboarding/business", label: "For Founders" },
-    { to: "/investor", label: "Investors" },
+    ...(user && (userRole === "business_owner") ? [{ to: "/business-dashboard", label: "My Businesses" }] : []),
+    ...(user && (userRole === "business_owner" || !userRole) && !user ? [{ to: "/onboarding/business", label: "For Founders" }] : []),
+    ...(!user ? [{ to: "/onboarding/business", label: "For Founders" }] : []),
+    ...(user && userRole === "investor" ? [{ to: "/investor", label: "Dashboard" }] : []),
+    ...(!user ? [{ to: "/investor", label: "Investors" }] : []),
     { to: "/about", label: "About" },
     ...(user && userRole === "admin" ? [{ to: "/admin", label: "Admin" }] : []),
   ];

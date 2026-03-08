@@ -129,7 +129,7 @@ const BusinessOnboarding = () => {
       toast.error(error.message);
     } else {
       toast.success("Business submitted for review!");
-      navigate("/");
+      navigate("/business-dashboard");
     }
   };
 
