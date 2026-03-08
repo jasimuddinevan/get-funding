@@ -120,8 +120,8 @@ const BusinessDetail = () => {
       navigate("/login");
       return;
     }
-    if (userRole !== "investor") {
-      toast.error("Only investors can make investments");
+    if (userRole !== "investor" && userRole !== "business_owner") {
+      toast.error("Only investors and business owners can make investments");
       return;
     }
     setSelectedTierIdx(tierIdx ?? null);
