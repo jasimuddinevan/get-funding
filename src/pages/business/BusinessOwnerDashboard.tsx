@@ -189,6 +189,8 @@ const BusinessOwnerDashboard = () => {
               </div>
             </motion.div>
           )}
+          {/* Analytics for approved businesses */}
+          {user && <BusinessAnalyticsSection businesses={businesses} userId={user.id} />}
 
           {/* Business List */}
           {businesses.length === 0 ? (
