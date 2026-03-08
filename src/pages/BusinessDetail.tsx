@@ -75,16 +75,20 @@ const BusinessDetail = () => {
     if (!id) return;
     const fetchData = async () => {
       setLoading(true);
-      const [bizRes, teamRes, tiersRes, investRes] = await Promise.all([
+      const [bizRes, teamRes, tiersRes, investRes, bankRes] = await Promise.all([
         supabase.from("businesses").select("*").eq("id", id).maybeSingle(),
         supabase.from("business_team_members").select("*").eq("business_id", id),
         supabase.from("investment_tiers").select("*").eq("business_id", id).order("min_amount", { ascending: true }),
         supabase.from("investments").select("id", { count: "exact" }).eq("business_id", id).eq("status", "active"),
+        supabase.from("payment_methods").select("id, bank_name, account_name, account_number, branch_name, routing_number, instructions").eq("is_active", true),
       ]);
       setBusiness(bizRes.data);
       setTeam(teamRes.data ?? []);
       setTiers(tiersRes.data ?? []);
       setInvestorCount(investRes.count ?? 0);
+      const banks = (bankRes.data ?? []) as BankAccount[];
+      setBankAccounts(banks);
+      if (banks.length > 0) setSelectedBankId(banks[0].id);
 
       // Check if current user is a verified investor
       if (user) {
