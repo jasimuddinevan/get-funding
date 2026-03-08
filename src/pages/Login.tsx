@@ -23,7 +23,7 @@ const Login = () => {
       if (userRole === "admin") {
         navigate("/admin");
       } else if (userRole === "business_owner") {
-        navigate("/onboarding/business");
+        navigate("/business-dashboard");
       } else {
         navigate("/investor");
       }
