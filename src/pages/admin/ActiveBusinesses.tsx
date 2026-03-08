@@ -282,31 +282,31 @@ const ActiveBusinesses = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filtered.map((biz, i) => (
                 <motion.div
                   key={biz.id}
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: i * 0.03 }}
                 >
-                  <Card className="rounded-xl border-border/50 hover:border-primary/30 transition-all hover:shadow-lg group">
-                    <CardContent className="p-6">
-                      {/* Header: Avatar + Industry badge */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
+                  <Card className="rounded-lg border-border/50 hover:border-primary/20 transition-all duration-200 hover:shadow-md">
+                    <CardContent className="p-5">
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                           <span className="text-sm font-semibold text-primary">{biz.name.charAt(0)}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           {biz.industry && (
-                            <Badge variant="secondary" className="text-xs font-normal px-2.5 py-0.5 rounded-full">{biz.industry}</Badge>
+                            <Badge variant="secondary" className="text-[11px] font-medium px-2 py-0.5">{biz.industry}</Badge>
                           )}
                           <button
                             onClick={() => toggleFeatured(biz)}
-                            className={`p-1.5 rounded-lg transition-colors ${
+                            className={`p-1 rounded transition-colors ${
                               biz.featured
                                 ? "text-primary hover:bg-primary/10"
-                                : "text-muted-foreground hover:bg-secondary hover:text-primary"
+                                : "text-muted-foreground hover:text-primary hover:bg-secondary"
                             }`}
                             title={biz.featured ? "Remove from featured" : "Mark as featured"}
                           >
@@ -316,37 +316,37 @@ const ActiveBusinesses = () => {
                       </div>
 
                       {/* Name */}
-                      <h3 className="font-display text-lg font-semibold text-foreground leading-tight mb-1 truncate">{biz.name}</h3>
+                      <h3 className="font-display text-base font-semibold text-foreground leading-snug mb-0.5 truncate">{biz.name}</h3>
 
                       {/* Location */}
                       {biz.location && (
-                        <p className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
-                          <MapPin className="w-3.5 h-3.5" /> {biz.location}
+                        <p className="flex items-center gap-1 text-[13px] text-muted-foreground mb-2.5">
+                          <MapPin className="w-3 h-3 shrink-0" /> {biz.location}
                         </p>
                       )}
 
                       {/* Description */}
                       {biz.description && (
-                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-4">{biz.description}</p>
+                        <p className="text-[13px] text-muted-foreground leading-relaxed line-clamp-2 mb-3">{biz.description}</p>
                       )}
 
                       {/* Revenue share */}
                       {biz.revenue_share_pct != null && (
-                        <div className="flex items-center gap-1.5 mb-4">
-                          <TrendingUp className="w-4 h-4 text-primary" />
-                          <span className="font-mono text-sm font-semibold text-primary">{biz.revenue_share_pct}%</span>
-                          <span className="text-sm text-muted-foreground">revenue share</span>
+                        <div className="flex items-center gap-1.5 mb-3">
+                          <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                          <span className="font-mono text-[13px] font-semibold text-primary">{biz.revenue_share_pct}%</span>
+                          <span className="text-[13px] text-muted-foreground">revenue share</span>
                         </div>
                       )}
 
                       {/* Funded progress */}
                       {biz.funded_amount != null && biz.funding_goal ? (
-                        <div className="mb-4">
-                          <div className="flex items-center justify-between text-sm mb-1.5">
+                        <div className="mb-3">
+                          <div className="flex items-center justify-between text-[13px] mb-1">
                             <span className="text-muted-foreground">Funded</span>
                             <span className="font-mono font-medium text-foreground">{Math.round((biz.funded_amount / biz.funding_goal) * 100)}%</span>
                           </div>
-                          <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                          <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
                             <div
                               className="h-full rounded-full bg-primary transition-all"
                               style={{ width: `${Math.min(100, (biz.funded_amount / biz.funding_goal) * 100)}%` }}
@@ -356,30 +356,30 @@ const ActiveBusinesses = () => {
                       ) : null}
 
                       {/* Actions */}
-                      <div className="pt-4 border-t border-border/40 flex gap-2">
+                      <div className="pt-3 mt-1 border-t border-border/30 flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1 gap-1.5 text-xs rounded-lg text-orange-500 border-orange-500/30 hover:bg-orange-500/10"
+                          className="flex-1 gap-1.5 text-[12px] h-8 rounded-md text-orange-500 border-orange-500/20 hover:bg-orange-500/10 hover:border-orange-500/30"
                           onClick={() => {
                             setDisapproveTarget(biz);
                             setDisapproveAction("suspended");
                             setDisapproveFeedback("");
                           }}
                         >
-                          <Ban className="w-3.5 h-3.5" /> Suspend
+                          <Ban className="w-3 h-3" /> Suspend
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1 gap-1.5 text-xs rounded-lg text-destructive border-destructive/30 hover:bg-destructive/10"
+                          className="flex-1 gap-1.5 text-[12px] h-8 rounded-md text-destructive border-destructive/20 hover:bg-destructive/10 hover:border-destructive/30"
                           onClick={() => {
                             setDisapproveTarget(biz);
                             setDisapproveAction("rejected");
                             setDisapproveFeedback("");
                           }}
                         >
-                          <XCircle className="w-3.5 h-3.5" /> Revoke
+                          <XCircle className="w-3 h-3" /> Revoke
                         </Button>
                       </div>
                     </CardContent>
@@ -404,39 +404,39 @@ const ActiveBusinesses = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {suspendedBusinesses.map((biz, i) => (
                 <motion.div
                   key={biz.id}
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: i * 0.03 }}
                 >
-                  <Card className="rounded-xl border-orange-500/20 hover:border-orange-500/40 transition-all hover:shadow-lg">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="w-10 h-10 rounded-full bg-orange-500/15 flex items-center justify-center">
+                  <Card className="rounded-lg border-orange-500/15 hover:border-orange-500/30 transition-all duration-200 hover:shadow-md">
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="w-9 h-9 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
                           <span className="text-sm font-semibold text-orange-500">{biz.name.charAt(0)}</span>
                         </div>
-                        <Badge variant="outline" className="text-xs font-normal px-2.5 py-0.5 rounded-full border-orange-500/30 text-orange-500">Suspended</Badge>
+                        <Badge variant="outline" className="text-[11px] font-medium px-2 py-0.5 border-orange-500/25 text-orange-500">Suspended</Badge>
                       </div>
 
-                      <h3 className="font-display text-lg font-semibold text-foreground leading-tight mb-1 truncate">{biz.name}</h3>
+                      <h3 className="font-display text-base font-semibold text-foreground leading-snug mb-0.5 truncate">{biz.name}</h3>
 
                       {biz.location && (
-                        <p className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
-                          <MapPin className="w-3.5 h-3.5" /> {biz.location}
+                        <p className="flex items-center gap-1 text-[13px] text-muted-foreground mb-2.5">
+                          <MapPin className="w-3 h-3 shrink-0" /> {biz.location}
                         </p>
                       )}
 
                       {biz.description && (
-                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-4">{biz.description}</p>
+                        <p className="text-[13px] text-muted-foreground leading-relaxed line-clamp-2 mb-3">{biz.description}</p>
                       )}
 
-                      <div className="pt-4 border-t border-border/40">
+                      <div className="pt-3 mt-1 border-t border-border/30">
                         <Button
                           size="sm"
-                          className="w-full gap-1.5 text-sm rounded-lg"
+                          className="w-full gap-1.5 text-[13px] h-8 rounded-md"
                           onClick={() => setReinstateTarget(biz)}
                         >
                           <RotateCcw className="w-3.5 h-3.5" /> Reinstate to Active
