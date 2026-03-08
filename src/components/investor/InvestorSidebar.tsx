@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, History, Bookmark, Bell, LogOut, ChevronLeft,
+  LayoutDashboard, History, Bookmark, Bell, LogOut, ChevronLeft, Building2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -59,6 +59,7 @@ export function InvestorSidebar() {
   const items = [
     { title: "Portfolio", url: "/investor", icon: LayoutDashboard, badge: 0 },
     { title: "Investments", url: "/investor/investments", icon: History, badge: 0 },
+    { title: "List Business", url: "/onboarding/business", icon: Building2, badge: 0 },
     { title: "Watchlist", url: "/investor/watchlist", icon: Bookmark, badge: 0 },
     { title: "Notifications", url: "/investor/notifications", icon: Bell, badge: unreadCount },
   ];
