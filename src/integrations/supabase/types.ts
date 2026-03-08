@@ -264,34 +264,49 @@ export type Database = {
       }
       investments: {
         Row: {
+          admin_payment_note: string | null
           amount: number
           business_id: string
           created_at: string
           id: string
           invested_at: string
           investor_id: string
+          payment_method: string | null
+          payment_proof_url: string | null
+          payment_reviewed_at: string | null
+          payment_reviewed_by: string | null
           revenue_share_pct: number
           status: string
           tier_id: string | null
         }
         Insert: {
+          admin_payment_note?: string | null
           amount: number
           business_id: string
           created_at?: string
           id?: string
           invested_at?: string
           investor_id: string
+          payment_method?: string | null
+          payment_proof_url?: string | null
+          payment_reviewed_at?: string | null
+          payment_reviewed_by?: string | null
           revenue_share_pct: number
           status?: string
           tier_id?: string | null
         }
         Update: {
+          admin_payment_note?: string | null
           amount?: number
           business_id?: string
           created_at?: string
           id?: string
           invested_at?: string
           investor_id?: string
+          payment_method?: string | null
+          payment_proof_url?: string | null
+          payment_reviewed_at?: string | null
+          payment_reviewed_by?: string | null
           revenue_share_pct?: number
           status?: string
           tier_id?: string | null
