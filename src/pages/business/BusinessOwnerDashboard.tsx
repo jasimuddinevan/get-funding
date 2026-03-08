@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import BusinessAnalyticsSection from "@/components/business/BusinessAnalyticsSection";
 import {
   Building2, Plus, Clock, CheckCircle2, XCircle, FileSearch, Eye,
   TrendingUp, DollarSign, MapPin, Calendar, Loader2, ArrowRight,
@@ -188,6 +189,8 @@ const BusinessOwnerDashboard = () => {
               </div>
             </motion.div>
           )}
+          {/* Analytics for approved businesses */}
+          {user && <BusinessAnalyticsSection businesses={businesses} userId={user.id} />}
 
           {/* Business List */}
           {businesses.length === 0 ? (
