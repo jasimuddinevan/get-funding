@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard, FileSearch, Users, BarChart3, LogOut, ChevronLeft, Shield,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -17,23 +19,42 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const items = [
-  { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-  { title: "Business Reviews", url: "/admin/reviews", icon: FileSearch },
-  { title: "User Management", url: "/admin/users", icon: Users },
-  { title: "Investments", url: "/admin/investments", icon: BarChart3 },
-];
-
 export function AdminSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    const fetchPending = async () => {
+      const { count } = await supabase
+        .from("businesses")
+        .select("*", { count: "exact", head: true })
+        .in("status", ["pending", "under_review"]);
+      setPendingCount(count ?? 0);
+    };
+    fetchPending();
+
+    const channel = supabase
+      .channel("admin-biz-updates")
+      .on("postgres_changes", { event: "*", schema: "public", table: "businesses" }, () => fetchPending())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
+
+  const items = [
+    { title: "Dashboard", url: "/admin", icon: LayoutDashboard, badge: 0 },
+    { title: "Business Reviews", url: "/admin/reviews", icon: FileSearch, badge: pendingCount },
+    { title: "User Management", url: "/admin/users", icon: Users, badge: 0 },
+    { title: "Investments", url: "/admin/investments", icon: BarChart3, badge: 0 },
+  ];
 
   return (
     <Sidebar collapsible="icon">
@@ -62,7 +83,14 @@ export function AdminSidebar() {
                       className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                     >
-                      <item.icon className="w-4 h-4 shrink-0" />
+                      <div className="relative shrink-0">
+                        <item.icon className="w-4 h-4" />
+                        {item.badge > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-1">
+                            {item.badge > 9 ? "9+" : item.badge}
+                          </span>
+                        )}
+                      </div>
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
