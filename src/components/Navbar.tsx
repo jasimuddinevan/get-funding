@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Globe, MapPin, Sun, Moon, ChevronDown, Building2, TrendingUp, Shield, LayoutDashboard } from "lucide-react";
+import { Menu, X, Globe, MapPin, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocale } from "@/contexts/LocaleContext";
@@ -15,129 +15,132 @@ const Navbar = () => {
 
   const navLinks = [
     { to: "/", label: "Home" },
-    { to: "/explore", label: "Companies" },
-    { to: "/onboarding/business", label: "Get Listed" },
+    { to: "/explore", label: "Deals" },
+    { to: "/onboarding/business", label: "For Founders" },
     { to: "/investor", label: "Investors" },
     { to: "/about", label: "About" },
-    ...(user && userRole === "admin" ? [{ to: "/admin", label: "Admin Panel" }] : []),
+    ...(user && userRole === "admin" ? [{ to: "/admin", label: "Admin" }] : []),
   ];
 
   return (
     <>
-      {/* Top Bar */}
-      <div className="hidden md:block bg-foreground/[0.03] dark:bg-card/50 border-b border-border/60">
-        <div className="container mx-auto flex items-center justify-between h-9 px-4 text-[11px] text-muted-foreground">
-          <div className="flex items-center gap-4">
-            <span>📧 support@fundbridge.io</span>
-            <span className="w-px h-3 bg-border" />
-            <span>📞 +880 1700-000000</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setRegion(region === "bd" ? "global" : "bd")}
-              className="flex items-center gap-1 hover:text-foreground transition-colors"
-            >
-              {region === "bd" ? (
-                <><MapPin className="w-3 h-3" /> Bangladesh</>
-              ) : (
-                <><Globe className="w-3 h-3" /> Global</>
-              )}
-            </button>
-            <span className="w-px h-3 bg-border" />
-            <button
-              onClick={toggleTheme}
-              className="flex items-center gap-1 hover:text-foreground transition-colors"
-              aria-label="Toggle theme"
-            >
-              {theme === "light" ? <><Moon className="w-3 h-3" /> Dark</> : <><Sun className="w-3 h-3" /> Light</>}
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Accent strip */}
+      <div className="accent-strip w-full" />
 
       {/* Main Navbar */}
-      <nav className="sticky top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border/60 shadow-sm dark:shadow-none">
-        <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/20">
-              <span className="text-primary-foreground font-bold text-sm">FB</span>
-            </div>
-            <span className="font-display text-xl font-bold text-foreground">
+      <nav className="sticky top-0 left-0 right-0 z-50 h-16 bg-background/85 backdrop-blur-xl backdrop-saturate-[1.8] border-b border-foreground/[0.06]">
+        <div className="container mx-auto flex items-center justify-between h-full px-4">
+          {/* Wordmark Logo */}
+          <Link to="/" className="flex items-center">
+            <span className="font-display text-[22px] text-foreground">
               Fund<span className="text-primary">Bridge</span>
             </span>
           </Link>
 
+          {/* Desktop Nav Links */}
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 rounded-lg transition-all"
+                className="relative px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 group"
               >
                 {link.label}
+                <span className="absolute bottom-0 left-4 right-4 h-px bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left" />
               </Link>
             ))}
           </div>
 
-          <div className="hidden md:flex items-center gap-2">
+          {/* Right side */}
+          <div className="hidden md:flex items-center gap-3">
+            <button
+              onClick={() => setRegion(region === "bd" ? "global" : "bd")}
+              className="text-muted-foreground hover:text-foreground transition-colors text-sm flex items-center gap-1"
+            >
+              {region === "bd" ? <MapPin className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+            </button>
+            <button
+              onClick={toggleTheme}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            </button>
+
             {user ? (
               <>
-                <span className="text-xs text-muted-foreground mr-1 hidden lg:block">{user.email}</span>
-                <Button variant="outline" size="sm" onClick={() => signOut()} className="shadow-sm">
+                <span className="text-xs text-muted-foreground hidden lg:block">{user.email}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => signOut()}
+                  className="text-muted-foreground hover:text-foreground"
+                >
                   Sign Out
                 </Button>
               </>
             ) : (
               <>
-                <Button variant="ghost" size="sm" asChild>
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" asChild>
                   <Link to="/login">{t("nav.signIn")}</Link>
                 </Button>
-                <Button size="sm" className="glow-gold shadow-md" asChild>
-                  <Link to="/signup">{t("nav.getStarted")}</Link>
+                <Button
+                  size="sm"
+                  className="rounded-full px-5 bg-primary text-primary-foreground font-semibold btn-glow hover:brightness-110 transition-all"
+                  asChild
+                >
+                  <Link to="/signup">Get Funded</Link>
                 </Button>
               </>
             )}
           </div>
 
+          {/* Mobile hamburger */}
           <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
 
+        {/* Mobile menu */}
         <AnimatePresence>
           {mobileOpen && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden bg-card border-t border-border"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="md:hidden fixed inset-0 top-[65px] bg-background/98 backdrop-blur-xl z-50"
             >
-              <div className="container mx-auto px-4 py-4 flex flex-col gap-1">
+              <div className="container mx-auto px-6 py-8 flex flex-col gap-2">
                 {navLinks.map((link) => (
-                  <Link key={link.to} to={link.to} className="text-sm py-2.5 px-3 rounded-lg text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-all" onClick={() => setMobileOpen(false)}>
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className="text-lg py-3 text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => setMobileOpen(false)}
+                  >
                     {link.label}
                   </Link>
                 ))}
-                <div className="flex items-center justify-between py-2 px-3">
+                <div className="flex items-center gap-4 py-4 border-t border-border mt-4">
                   <button onClick={() => setRegion(region === "bd" ? "global" : "bd")} className="text-sm text-muted-foreground flex items-center gap-1.5">
-                    {region === "bd" ? <><MapPin className="w-3.5 h-3.5" /> Bangladesh</> : <><Globe className="w-3.5 h-3.5" /> Global</>}
+                    {region === "bd" ? <><MapPin className="w-3.5 h-3.5" /> BD</> : <><Globe className="w-3.5 h-3.5" /> Global</>}
                   </button>
                   <button onClick={toggleTheme} className="text-sm text-muted-foreground flex items-center gap-1.5">
-                    {theme === "light" ? <><Moon className="w-3.5 h-3.5" /> Dark</> : <><Sun className="w-3.5 h-3.5" /> Light</>}
+                    {theme === "light" ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
                   </button>
                 </div>
-                <div className="flex gap-2 pt-3 border-t border-border mt-2">
+                <div className="flex flex-col gap-3 pt-4">
                   {user ? (
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => { signOut(); setMobileOpen(false); }}>
+                    <Button variant="outline" onClick={() => { signOut(); setMobileOpen(false); }}>
                       Sign Out
                     </Button>
                   ) : (
                     <>
-                      <Button variant="outline" size="sm" className="flex-1" asChild>
+                      <Button variant="outline" asChild>
                         <Link to="/login" onClick={() => setMobileOpen(false)}>{t("nav.signIn")}</Link>
                       </Button>
-                      <Button size="sm" className="flex-1 glow-gold" asChild>
-                        <Link to="/signup" onClick={() => setMobileOpen(false)}>{t("nav.getStarted")}</Link>
+                      <Button className="rounded-full bg-primary text-primary-foreground font-semibold btn-glow" asChild>
+                        <Link to="/signup" onClick={() => setMobileOpen(false)}>Get Funded</Link>
                       </Button>
                     </>
                   )}
