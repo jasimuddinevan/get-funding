@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, FileSearch, Users, BarChart3, LogOut, ChevronLeft, Shield, CreditCard, Landmark,
+  LayoutDashboard, FileSearch, Users, BarChart3, LogOut, ChevronLeft, Shield, CreditCard, Landmark, Building2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";

@@ -55,6 +55,7 @@ const AppShell = () => {
             <Route path="/admin" element={<AdminPanel />}>
               <Route index element={<AdminDashboardOverview />} />
               <Route path="reviews" element={<BusinessReviews />} />
+              <Route path="businesses" element={<ActiveBusinesses />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="investments" element={<InvestmentMonitoring />} />
               <Route path="payments" element={<PaymentApprovals />} />
