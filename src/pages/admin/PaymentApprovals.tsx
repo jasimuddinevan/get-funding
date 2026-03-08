@@ -23,6 +23,7 @@ interface PaymentInvestment {
   admin_payment_note: string | null;
   invested_at: string;
   investor_id: string;
+  business_id: string;
   businesses?: { name: string; industry: string | null } | null;
   investor_name?: string | null;
 }
