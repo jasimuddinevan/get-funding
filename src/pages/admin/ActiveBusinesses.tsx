@@ -1,13 +1,20 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
 import {
-  Building2, Search, MapPin, TrendingUp, DollarSign, Loader2, Star, Globe, ExternalLink, SlidersHorizontal, X,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import {
+  Building2, Search, MapPin, TrendingUp, DollarSign, Loader2, Star, Globe,
+  ExternalLink, SlidersHorizontal, X, Ban, XCircle, AlertTriangle,
 } from "lucide-react";
 import { INDUSTRIES } from "@/data/businesses";
 
@@ -26,11 +33,13 @@ interface Business {
   featured: boolean;
   created_at: string;
   status: string;
+  owner_id: string;
 }
 
 const LOCATIONS = ["All Locations", "Bangladesh", "Global"] as const;
 
 const ActiveBusinesses = () => {
+  const { user } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -38,18 +47,74 @@ const ActiveBusinesses = () => {
   const [location, setLocation] = useState("All Locations");
   const [showFilters, setShowFilters] = useState(false);
 
+  // Disapproval dialog state
+  const [disapproveTarget, setDisapproveTarget] = useState<Business | null>(null);
+  const [disapproveAction, setDisapproveAction] = useState<"rejected" | "suspended">("suspended");
+  const [disapproveFeedback, setDisapproveFeedback] = useState("");
+  const [disapproveLoading, setDisapproveLoading] = useState(false);
+
+  const fetchBusinesses = async () => {
+    const { data } = await supabase
+      .from("businesses")
+      .select("*")
+      .eq("status", "approved")
+      .order("created_at", { ascending: false });
+    setBusinesses((data as Business[]) ?? []);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetch = async () => {
-      const { data } = await supabase
-        .from("businesses")
-        .select("*")
-        .eq("status", "approved")
-        .order("created_at", { ascending: false });
-      setBusinesses((data as Business[]) ?? []);
-      setLoading(false);
-    };
-    fetch();
+    fetchBusinesses();
   }, []);
+
+  const handleDisapprove = async () => {
+    if (!disapproveTarget || !user) return;
+    setDisapproveLoading(true);
+
+    const { error } = await supabase
+      .from("businesses")
+      .update({
+        status: disapproveAction,
+        admin_feedback: disapproveFeedback.trim() || null,
+        reviewed_by: user.id,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", disapproveTarget.id);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      // Log review action
+      await supabase.from("admin_reviews").insert({
+        business_id: disapproveTarget.id,
+        reviewer_id: user.id,
+        action: disapproveAction,
+        comments: disapproveFeedback.trim() || null,
+      });
+
+      // Notify the business owner
+      const titles: Record<string, string> = {
+        rejected: "Business Approval Revoked",
+        suspended: "Business Suspended ⚠️",
+      };
+      const messages: Record<string, string> = {
+        rejected: `Your business "${disapproveTarget.name}" approval has been revoked. ${disapproveFeedback || "Please contact support for details."}`,
+        suspended: `Your business "${disapproveTarget.name}" has been suspended. ${disapproveFeedback || "Please contact support for details."}`,
+      };
+
+      await supabase.from("notifications").insert({
+        user_id: disapproveTarget.owner_id,
+        title: titles[disapproveAction] ?? "Business Update",
+        message: messages[disapproveAction] ?? "",
+      });
+
+      toast.success(`Business ${disapproveAction === "suspended" ? "suspended" : "disapproved"} successfully.`);
+      setDisapproveTarget(null);
+      setDisapproveFeedback("");
+      fetchBusinesses();
+    }
+    setDisapproveLoading(false);
+  };
 
   const filtered = useMemo(() => {
     return businesses.filter((b) => {
@@ -228,12 +293,89 @@ const ActiveBusinesses = () => {
                       </div>
                     </div>
                   ) : null}
+
+                  {/* Disapprove actions */}
+                  <div className="mt-3 pt-3 border-t border-border/30 flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-1.5 text-xs text-orange-500 border-orange-500/30 hover:bg-orange-500/10"
+                      onClick={() => {
+                        setDisapproveTarget(biz);
+                        setDisapproveAction("suspended");
+                        setDisapproveFeedback("");
+                      }}
+                    >
+                      <Ban className="w-3.5 h-3.5" /> Suspend
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
+                      onClick={() => {
+                        setDisapproveTarget(biz);
+                        setDisapproveAction("rejected");
+                        setDisapproveFeedback("");
+                      }}
+                    >
+                      <XCircle className="w-3.5 h-3.5" /> Revoke
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
           ))}
         </div>
       )}
+
+      {/* Disapproval Dialog */}
+      <Dialog open={!!disapproveTarget} onOpenChange={(open) => !open && setDisapproveTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className={`w-5 h-5 ${disapproveAction === "suspended" ? "text-orange-500" : "text-destructive"}`} />
+              {disapproveAction === "suspended" ? "Suspend Business" : "Revoke Approval"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              {disapproveAction === "suspended"
+                ? `This will suspend "${disapproveTarget?.name}" and temporarily remove it from the platform. The owner will be notified.`
+                : `This will revoke the approval of "${disapproveTarget?.name}" and remove it from the platform. The owner will be notified.`}
+            </p>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                Reason / Feedback (sent to business owner)
+              </label>
+              <Textarea
+                value={disapproveFeedback}
+                onChange={(e) => setDisapproveFeedback(e.target.value)}
+                placeholder="Explain the reason for this action..."
+                className="bg-secondary/50 border-border min-h-[100px]"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDisapproveTarget(null)} disabled={disapproveLoading}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDisapprove}
+              disabled={disapproveLoading}
+              className="gap-2"
+            >
+              {disapproveLoading ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+              ) : disapproveAction === "suspended" ? (
+                <><Ban className="w-4 h-4" /> Suspend Business</>
+              ) : (
+                <><XCircle className="w-4 h-4" /> Revoke Approval</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
