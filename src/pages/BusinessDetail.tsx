@@ -36,13 +36,15 @@ const formatCurrency = (val: number) => {
 
 const formatCurrencyFull = (val: number) => `৳${val.toLocaleString()}`;
 
-const PAYMENT_METHODS = [
-  { value: "bkash", label: "bKash" },
-  { value: "nagad", label: "Nagad" },
-  { value: "rocket", label: "Rocket" },
-  { value: "bank_transfer", label: "Bank Transfer" },
-  { value: "upay", label: "Upay" },
-];
+interface BankAccount {
+  id: string;
+  bank_name: string;
+  account_name: string;
+  account_number: string;
+  branch_name: string | null;
+  routing_number: string | null;
+  instructions: string | null;
+}
 
 const BusinessDetail = () => {
   const { id } = useParams<{ id: string }>();
