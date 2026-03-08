@@ -399,7 +399,7 @@ const BusinessReviews = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={() => { setSelected(biz); setFeedback(""); }}>
+                      <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={() => openReview(biz)}>
                         <Eye className="w-3.5 h-3.5" /> Review
                       </Button>
 
