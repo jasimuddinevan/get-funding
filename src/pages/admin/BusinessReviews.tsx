@@ -20,12 +20,14 @@ import { toast } from "sonner";
 import {
   FileSearch, CheckCircle2, XCircle, Eye, Clock, MapPin, TrendingUp,
   Building2, Globe, Calendar, DollarSign, Loader2, Star, Pencil,
-  Trash2, Ban, RotateCcw, MoreHorizontal,
+  Trash2, Ban, RotateCcw, MoreHorizontal, User, History, Mail, Phone,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 
 type BusinessStatus = "draft" | "pending" | "under_review" | "approved" | "rejected" | "suspended";
 
@@ -92,12 +94,52 @@ const BusinessReviews = () => {
   const [deleteTarget, setDeleteTarget] = useState<Business | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // Detail state
+  const [ownerProfile, setOwnerProfile] = useState<{ full_name: string | null; phone: string | null; avatar_url: string | null; user_id: string } | null>(null);
+  const [reviewHistory, setReviewHistory] = useState<Array<{ id: string; action: string; comments: string | null; created_at: string; reviewer_name: string | null }>>([]);
+  const [teamMembers, setTeamMembers] = useState<Array<{ id: string; name: string; role: string | null }>>([]);
+  const [documents, setDocuments] = useState<Array<{ id: string; document_type: string; file_name: string | null; file_url: string }>>([]);
+  const [investmentCount, setInvestmentCount] = useState(0);
+  const [detailLoading, setDetailLoading] = useState(false);
+
   const fetchBusinesses = async () => {
     let query = supabase.from("businesses").select("*").order("created_at", { ascending: false });
     if (filter !== "all") query = query.eq("status", filter);
     const { data } = await query;
     setBusinesses((data as Business[]) ?? []);
     setLoading(false);
+  };
+
+  const fetchDetails = async (biz: Business) => {
+    setDetailLoading(true);
+    const [profileRes, reviewsRes, teamRes, docsRes, investRes] = await Promise.all([
+      supabase.from("profiles").select("full_name, phone, avatar_url, user_id").eq("user_id", biz.owner_id).maybeSingle(),
+      supabase.from("admin_reviews").select("*").eq("business_id", biz.id).order("created_at", { ascending: false }),
+      supabase.from("business_team_members").select("id, name, role").eq("business_id", biz.id),
+      supabase.from("business_documents").select("id, document_type, file_name, file_url").eq("business_id", biz.id),
+      supabase.from("investments").select("id", { count: "exact", head: true }).eq("business_id", biz.id).eq("status", "active"),
+    ]);
+    setOwnerProfile(profileRes.data);
+    setInvestmentCount(investRes.count ?? 0);
+    setTeamMembers((teamRes.data ?? []) as typeof teamMembers);
+    setDocuments((docsRes.data ?? []) as typeof documents);
+
+    // Enrich reviews with reviewer names
+    const reviews = (reviewsRes.data ?? []) as Array<{ id: string; action: string; comments: string | null; created_at: string; reviewer_id: string }>;
+    const reviewerIds = [...new Set(reviews.map(r => r.reviewer_id))];
+    let reviewerMap = new Map<string, string | null>();
+    if (reviewerIds.length > 0) {
+      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name").in("user_id", reviewerIds);
+      reviewerMap = new Map((profiles ?? []).map(p => [p.user_id, p.full_name]));
+    }
+    setReviewHistory(reviews.map(r => ({ ...r, reviewer_name: reviewerMap.get(r.reviewer_id) ?? null })));
+    setDetailLoading(false);
+  };
+
+  const openReview = (biz: Business) => {
+    setSelected(biz);
+    setFeedback("");
+    fetchDetails(biz);
   };
 
   useEffect(() => {
@@ -357,7 +399,7 @@ const BusinessReviews = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={() => { setSelected(biz); setFeedback(""); }}>
+                      <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={() => openReview(biz)}>
                         <Eye className="w-3.5 h-3.5" /> Review
                       </Button>
 
@@ -392,7 +434,7 @@ const BusinessReviews = () => {
                             </DropdownMenuItem>
                           )}
                           {biz.status !== "rejected" && (
-                            <DropdownMenuItem onClick={() => { setSelected(biz); setFeedback(""); }} className="gap-2 text-red-600">
+                            <DropdownMenuItem onClick={() => openReview(biz)} className="gap-2 text-red-600">
                               <XCircle className="w-3.5 h-3.5" /> Reject
                             </DropdownMenuItem>
                           )}
@@ -422,9 +464,8 @@ const BusinessReviews = () => {
         </CardContent>
       </Card>
 
-      {/* Review Dialog */}
       <Dialog open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-card border-border">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-card border-border">
           {selected && (
             <>
               <DialogHeader>
@@ -434,92 +475,247 @@ const BusinessReviews = () => {
                   <Badge className={`text-[10px] capitalize border ${statusConfig[selected.status]?.bg} ${statusConfig[selected.status]?.color}`}>
                     {statusConfig[selected.status]?.label}
                   </Badge>
+                  {selected.featured && (
+                    <Badge className="text-[10px] bg-primary/15 text-primary border-primary/30 gap-1">
+                      <Star className="w-2.5 h-2.5 fill-primary" /> Featured
+                    </Badge>
+                  )}
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-4 py-4">
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <InfoItem icon={Building2} label="Industry" value={selected.industry} />
-                  <InfoItem icon={MapPin} label="Location" value={selected.location} />
-                  <InfoItem icon={Globe} label="Region" value={selected.region === "bd" ? "Bangladesh" : "Global"} />
-                  <InfoItem icon={Calendar} label="Founded" value={selected.founded_year?.toString()} />
-                  <InfoItem icon={DollarSign} label="Monthly Revenue" value={selected.current_revenue ? `৳${selected.current_revenue.toLocaleString()}` : null} />
-                  <InfoItem icon={DollarSign} label="Funding Goal" value={selected.funding_goal ? `৳${selected.funding_goal.toLocaleString()}` : null} />
-                  <InfoItem icon={TrendingUp} label="Revenue Share" value={selected.revenue_share_pct ? `${selected.revenue_share_pct}%` : null} />
-                  <InfoItem icon={TrendingUp} label="Growth Rate" value={selected.growth_rate ? `${selected.growth_rate}%` : null} />
-                  <InfoItem icon={DollarSign} label="Min Investment" value={selected.min_investment ? `৳${selected.min_investment.toLocaleString()}` : null} />
-                  <InfoItem icon={DollarSign} label="Max Investment" value={selected.max_investment ? `৳${selected.max_investment.toLocaleString()}` : null} />
-                </div>
+              {detailLoading ? (
+                <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+              ) : (
+                <Tabs defaultValue="details" className="mt-2">
+                  <TabsList className="bg-secondary/50 border border-border h-10 w-full justify-start">
+                    <TabsTrigger value="details" className="gap-1.5 text-xs"><Building2 className="w-3.5 h-3.5" /> Details</TabsTrigger>
+                    <TabsTrigger value="owner" className="gap-1.5 text-xs"><User className="w-3.5 h-3.5" /> Applicant</TabsTrigger>
+                    <TabsTrigger value="history" className="gap-1.5 text-xs"><History className="w-3.5 h-3.5" /> History ({reviewHistory.length})</TabsTrigger>
+                    <TabsTrigger value="action" className="gap-1.5 text-xs"><CheckCircle2 className="w-3.5 h-3.5" /> Action</TabsTrigger>
+                  </TabsList>
 
-                {selected.description && <TextBlock label="Description" value={selected.description} />}
-                {selected.pitch && <TextBlock label="Elevator Pitch" value={selected.pitch} />}
-                {selected.problem_solved && <TextBlock label="Problem Solved" value={selected.problem_solved} />}
-                {selected.target_market && <TextBlock label="Target Market" value={selected.target_market} />}
-                {selected.competitive_advantage && <TextBlock label="Competitive Advantage" value={selected.competitive_advantage} />}
-                {selected.financial_projection && <TextBlock label="Financial Projection" value={selected.financial_projection} />}
+                  {/* Details Tab */}
+                  <TabsContent value="details" className="space-y-4 mt-4">
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <InfoItem icon={Building2} label="Industry" value={selected.industry} />
+                      <InfoItem icon={MapPin} label="Location" value={selected.location} />
+                      <InfoItem icon={Globe} label="Region" value={selected.region === "bd" ? "Bangladesh" : "Global"} />
+                      <InfoItem icon={Calendar} label="Founded" value={selected.founded_year?.toString()} />
+                      <InfoItem icon={DollarSign} label="Monthly Revenue" value={selected.current_revenue ? `৳${selected.current_revenue.toLocaleString()}` : null} />
+                      <InfoItem icon={DollarSign} label="Funding Goal" value={selected.funding_goal ? `৳${selected.funding_goal.toLocaleString()}` : null} />
+                      <InfoItem icon={TrendingUp} label="Revenue Share" value={selected.revenue_share_pct ? `${selected.revenue_share_pct}%` : null} />
+                      <InfoItem icon={TrendingUp} label="Growth Rate" value={selected.growth_rate ? `${selected.growth_rate}%` : null} />
+                      <InfoItem icon={DollarSign} label="Min Investment" value={selected.min_investment ? `৳${selected.min_investment.toLocaleString()}` : null} />
+                      <InfoItem icon={DollarSign} label="Max Investment" value={selected.max_investment ? `৳${selected.max_investment.toLocaleString()}` : null} />
+                      <InfoItem icon={Clock} label="Payout" value={selected.payout_frequency} />
+                      <InfoItem icon={TrendingUp} label="Profit Margin" value={selected.profit_margin ? `${selected.profit_margin}%` : null} />
+                    </div>
 
-                {selected.admin_feedback && (
-                  <div className="rounded-xl border border-border bg-secondary/20 p-3">
-                    <span className="text-xs text-muted-foreground block mb-1">Previous Admin Feedback</span>
-                    <p className="text-sm text-foreground">{selected.admin_feedback}</p>
-                  </div>
-                )}
+                    <Separator />
 
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-1.5 block">Admin Feedback</label>
-                  <Textarea
-                    value={feedback}
-                    onChange={(e) => setFeedback(e.target.value)}
-                    placeholder="Feedback for the business owner..."
-                    className="bg-secondary/50 border-border min-h-[80px]"
-                    maxLength={1000}
-                  />
-                </div>
-              </div>
+                    {selected.description && <TextBlock label="Description" value={selected.description} />}
+                    {selected.pitch && <TextBlock label="Elevator Pitch" value={selected.pitch} />}
+                    {selected.problem_solved && <TextBlock label="Problem Solved" value={selected.problem_solved} />}
+                    {selected.target_market && <TextBlock label="Target Market" value={selected.target_market} />}
+                    {selected.competitive_advantage && <TextBlock label="Competitive Advantage" value={selected.competitive_advantage} />}
+                    {selected.financial_projection && <TextBlock label="Financial Projection" value={selected.financial_projection} />}
+                    {selected.website && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Website</h4>
+                        <a href={selected.website} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">{selected.website}</a>
+                      </div>
+                    )}
 
-              <DialogFooter className="flex-wrap gap-2">
-                {selected.status !== "rejected" && (
-                  <Button
-                    variant="outline"
-                    onClick={() => handleAction("rejected")}
-                    disabled={actionLoading}
-                    className="gap-2 border-red-500/30 text-red-600 hover:bg-red-500/10"
-                  >
-                    {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
-                    Reject
-                  </Button>
-                )}
-                {selected.status === "approved" && (
-                  <Button
-                    variant="outline"
-                    onClick={() => handleAction("suspended")}
-                    disabled={actionLoading}
-                    className="gap-2 border-orange-500/30 text-orange-600 hover:bg-orange-500/10"
-                  >
-                    <Ban className="w-4 h-4" /> Suspend
-                  </Button>
-                )}
-                {(selected.status === "rejected" || selected.status === "suspended") && (
-                  <Button
-                    variant="outline"
-                    onClick={() => handleAction("pending")}
-                    disabled={actionLoading}
-                    className="gap-2"
-                  >
-                    <RotateCcw className="w-4 h-4" /> Reset to Pending
-                  </Button>
-                )}
-                {selected.status !== "approved" && (
-                  <Button
-                    onClick={() => handleAction("approved")}
-                    disabled={actionLoading}
-                    className="gap-2"
-                  >
-                    {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                    Approve
-                  </Button>
-                )}
-              </DialogFooter>
+                    {/* Team */}
+                    {teamMembers.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Team Members</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {teamMembers.map(m => (
+                            <div key={m.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/40 border border-border">
+                              <User className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span className="text-sm font-medium text-foreground">{m.name}</span>
+                              {m.role && <span className="text-xs text-muted-foreground">• {m.role}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Documents */}
+                    {documents.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Documents</h4>
+                        <div className="space-y-1">
+                          {documents.map(d => (
+                            <a key={d.id} href={d.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline">
+                              <FileSearch className="w-3.5 h-3.5" /> {d.file_name ?? d.document_type}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="p-3 rounded-xl bg-secondary/30 text-center">
+                        <div className="text-lg font-bold text-foreground">{investmentCount}</div>
+                        <div className="text-xs text-muted-foreground">Active Investors</div>
+                      </div>
+                      <div className="p-3 rounded-xl bg-secondary/30 text-center">
+                        <div className="text-lg font-bold text-foreground">{teamMembers.length}</div>
+                        <div className="text-xs text-muted-foreground">Team Members</div>
+                      </div>
+                      <div className="p-3 rounded-xl bg-secondary/30 text-center">
+                        <div className="text-lg font-bold text-foreground">{documents.length}</div>
+                        <div className="text-xs text-muted-foreground">Documents</div>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  {/* Owner/Applicant Tab */}
+                  <TabsContent value="owner" className="space-y-4 mt-4">
+                    {ownerProfile ? (
+                      <Card className="border-border/40">
+                        <CardContent className="p-5">
+                          <div className="flex items-center gap-4 mb-4">
+                            <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-xl shrink-0">
+                              {ownerProfile.avatar_url ? (
+                                <img src={ownerProfile.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                              ) : (
+                                (ownerProfile.full_name ?? "?").charAt(0).toUpperCase()
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="font-display text-lg font-semibold text-foreground">{ownerProfile.full_name ?? "Unknown"}</h3>
+                              <p className="text-xs text-muted-foreground font-mono">{ownerProfile.user_id}</p>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            {ownerProfile.phone && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <Phone className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-foreground">{ownerProfile.phone}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2 text-sm">
+                              <User className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Owner ID:</span>
+                              <span className="text-foreground font-mono text-xs">{selected.owner_id}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Calendar className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Applied:</span>
+                              <span className="text-foreground">{new Date(selected.created_at).toLocaleString()}</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="text-center py-8">
+                        <User className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+                        <p className="text-sm text-muted-foreground">No profile found for this applicant.</p>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* History Tab */}
+                  <TabsContent value="history" className="space-y-4 mt-4">
+                    {selected.admin_feedback && (
+                      <div className="rounded-xl border border-border bg-secondary/20 p-3">
+                        <span className="text-xs text-muted-foreground block mb-1">Current Feedback on Record</span>
+                        <p className="text-sm text-foreground">{selected.admin_feedback}</p>
+                      </div>
+                    )}
+
+                    {reviewHistory.length > 0 ? (
+                      <div className="space-y-3">
+                        {reviewHistory.map((r) => {
+                          const sc = statusConfig[r.action] ?? statusConfig.draft;
+                          return (
+                            <div key={r.id} className="flex gap-3 p-3 rounded-xl border border-border bg-secondary/10">
+                              <div className="w-8 h-8 rounded-full bg-secondary/50 flex items-center justify-center shrink-0 mt-0.5">
+                                <History className="w-4 h-4 text-muted-foreground" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Badge className={`text-[10px] capitalize border ${sc.bg} ${sc.color}`}>{r.action.replace("_", " ")}</Badge>
+                                  <span className="text-xs text-muted-foreground">by {r.reviewer_name ?? "Admin"}</span>
+                                </div>
+                                {r.comments && <p className="text-sm text-foreground">{r.comments}</p>}
+                                <p className="text-xs text-muted-foreground mt-1">{new Date(r.created_at).toLocaleString()}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <History className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+                        <p className="text-sm text-muted-foreground">No review history yet.</p>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* Action Tab */}
+                  <TabsContent value="action" className="space-y-4 mt-4">
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-1.5 block">Admin Feedback</label>
+                      <Textarea
+                        value={feedback}
+                        onChange={(e) => setFeedback(e.target.value)}
+                        placeholder="Feedback for the business owner..."
+                        className="bg-secondary/50 border-border min-h-[80px]"
+                        maxLength={1000}
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {selected.status !== "rejected" && (
+                        <Button
+                          variant="outline"
+                          onClick={() => handleAction("rejected")}
+                          disabled={actionLoading}
+                          className="gap-2 border-red-500/30 text-red-600 hover:bg-red-500/10"
+                        >
+                          {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+                          Reject
+                        </Button>
+                      )}
+                      {selected.status === "approved" && (
+                        <Button
+                          variant="outline"
+                          onClick={() => handleAction("suspended")}
+                          disabled={actionLoading}
+                          className="gap-2 border-orange-500/30 text-orange-600 hover:bg-orange-500/10"
+                        >
+                          <Ban className="w-4 h-4" /> Suspend
+                        </Button>
+                      )}
+                      {(selected.status === "rejected" || selected.status === "suspended") && (
+                        <Button
+                          variant="outline"
+                          onClick={() => handleAction("pending")}
+                          disabled={actionLoading}
+                          className="gap-2"
+                        >
+                          <RotateCcw className="w-4 h-4" /> Reset to Pending
+                        </Button>
+                      )}
+                      {selected.status !== "approved" && (
+                        <Button
+                          onClick={() => handleAction("approved")}
+                          disabled={actionLoading}
+                          className="gap-2"
+                        >
+                          {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                          Approve
+                        </Button>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              )}
             </>
           )}
         </DialogContent>
