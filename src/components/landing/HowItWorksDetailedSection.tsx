@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import {
   FileText, ShieldCheck, Search,
   Eye, HandCoins, BarChart3,
@@ -13,6 +14,57 @@ const steps = [
   { icon: HandCoins, number: "05", titleKey: "hiwd.step5" },
   { icon: BarChart3, number: "06", titleKey: "hiwd.step6" },
 ];
+
+const StickyCard = ({
+  step,
+  index,
+  total,
+}: {
+  step: (typeof steps)[0];
+  index: number;
+  total: number;
+}) => {
+  const { t } = useLocale();
+  const Icon = step.icon;
+
+  return (
+    <div
+      className="sticky top-24"
+      style={{ paddingTop: `${index * 24}px`, zIndex: index + 1 }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.05 }}
+        viewport={{ once: true, margin: "-50px" }}
+        className="surface-card p-6 sm:p-8 group hover:border-primary/40 transition-all duration-300"
+      >
+        <div className="flex items-start gap-5">
+          <div className="flex flex-col items-center gap-3 shrink-0">
+            <div className="w-12 h-12 rounded-full border border-border flex items-center justify-center group-hover:border-primary/40 transition-colors">
+              <Icon className="w-6 h-6 text-primary" />
+            </div>
+            <span className="font-mono text-[11px] text-primary font-medium">
+              {step.number}
+            </span>
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <span className="eyebrow text-muted-foreground block mb-1">
+              {t(`${step.titleKey}.subtitle`)}
+            </span>
+            <h3 className="font-sans text-lg font-semibold text-foreground mb-2">
+              {t(`${step.titleKey}.title`)}
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {t(`${step.titleKey}.desc`)}
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
 
 const HowItWorksDetailedSection = () => {
   const { t } = useLocale();
@@ -34,44 +86,16 @@ const HowItWorksDetailedSection = () => {
           <p className="text-muted-foreground max-w-[520px] text-[17px]">{t("hiwd.subtitle")}</p>
         </motion.div>
 
-        {/* Timeline grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {steps.map((step, index) => {
-            const Icon = step.icon;
-            return (
-              <motion.div
-                key={step.number}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.08 }}
-                viewport={{ once: true }}
-                className="surface-card p-6 sm:p-8 group hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-300"
-              >
-                <div className="flex items-start gap-5">
-                  {/* Left accent bar */}
-                  <div className="flex flex-col items-center gap-3 shrink-0">
-                    <div className="w-12 h-12 rounded-full border border-border flex items-center justify-center group-hover:border-primary/40 transition-colors">
-                      <Icon className="w-6 h-6 text-primary" />
-                    </div>
-                    <span className="font-mono text-[11px] text-primary font-medium">{step.number}</span>
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <span className="eyebrow text-muted-foreground block mb-1">
-                      {t(`${step.titleKey}.subtitle`)}
-                    </span>
-                    <h3 className="font-sans text-lg font-semibold text-foreground mb-2">
-                      {t(`${step.titleKey}.title`)}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t(`${step.titleKey}.desc`)}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
+        {/* Sticky stacking cards */}
+        <div className="relative pb-[120px]">
+          {steps.map((step, index) => (
+            <StickyCard
+              key={step.number}
+              step={step}
+              index={index}
+              total={steps.length}
+            />
+          ))}
         </div>
       </div>
     </section>
