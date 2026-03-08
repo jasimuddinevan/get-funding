@@ -157,8 +157,8 @@ const ActiveBusinesses = () => {
     setReinstateLoading(false);
   };
 
-
-    const toggleFeatured = async (biz: Business) => {
+  const toggleFeatured = async (biz: Business) => {
+    const newVal = !biz.featured;
     const { error } = await supabase
       .from("businesses")
       .update({ featured: newVal })
