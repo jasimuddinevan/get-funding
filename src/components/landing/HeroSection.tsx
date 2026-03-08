@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, TrendingUp, Shield, Building2, Users } from "lucide-react";
+import { ArrowRight, TrendingUp, Building2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/contexts/LocaleContext";
 
